@@ -1,14 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  LogOut,
-  MessageSquare,
-  Users,
-  BarChart3,
-  Mail,
-  CheckCircle,
-} from "lucide-react";
+import { LogOut, MessageSquare, Users, Mail, CheckCircle } from "lucide-react";
 
 interface Message {
   _id: string;
@@ -35,7 +28,6 @@ export default function AdminDashboard() {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [reply, setReply] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
 
   const apiUrl =
     (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
@@ -70,7 +62,7 @@ export default function AdminDashboard() {
         setMessages(data.messages);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data");
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
