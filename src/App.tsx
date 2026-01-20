@@ -53,7 +53,15 @@ function AppContent() {
             </>
           }
         />
-        <Route path="/contact" element={<ContactPage />} />
+        <Route
+          path="/contact"
+          element={
+            <>
+              <Navigation />
+              <ContactPage />
+            </>
+          }
+        />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
