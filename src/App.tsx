@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -10,7 +10,6 @@ import Hero from "./components/Hero";
 import About from "./components/About";
 import Skills from "./components/Skills";
 import Portfolio from "./components/Portfolio";
-import Contact from "./components/Contact";
 import ContactPage from "./pages/ContactPage";
 import SocialLinks from "./components/SocialLinks";
 import Footer from "./components/Footer";
