@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Github, Linkedin, Mail } from "lucide-react";
@@ -49,7 +50,8 @@ const Contact: React.FC = () => {
     setError("");
 
     try {
-      const apiUrl = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+      const apiUrl =
+        (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
       const response = await fetch(`${apiUrl}/api/contact`, {
         method: "POST",
         headers: {
