@@ -11,6 +11,8 @@ import About from "./components/About";
 import Skills from "./components/Skills";
 import Portfolio from "./components/Portfolio";
 import ContactPage from "./pages/ContactPage";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import SocialLinks from "./components/SocialLinks";
 import Footer from "./components/Footer";
 import TorchLight from "./components/TorchLight";
@@ -35,12 +37,12 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-      <Navigation />
       <Routes>
         <Route
           path="/"
           element={
             <>
+              <Navigation />
               <Hero />
               <About />
               <Skills />
@@ -52,6 +54,8 @@ function AppContent() {
           }
         />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
     </div>
   );
