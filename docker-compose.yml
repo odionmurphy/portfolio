@@ -24,7 +24,7 @@ services:
     depends_on:
       - mongodb
     environment:
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/portfolio?authSource=admin
+      - MONGODB_URI=mongodb+srv://djmurphyluv_db_user:mrhQarOoN9xO5vrO@cluster0.h6vemob.mongodb.net/portfolio
       - RESEND_API_KEY=re_fn9T79ex_PDJRZCTTWqhNDWLVgAibhNRB
       - EMAIL_FROM=djmurphy041@gmail.com
       - EMAIL_USER=djmurphy041@gmail.com

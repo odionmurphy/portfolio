@@ -49,7 +49,7 @@ const Contact: React.FC = () => {
     setError("");
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const apiUrl = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
       const response = await fetch(`${apiUrl}/api/contact`, {
         method: "POST",
         headers: {
