@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Github, Linkedin, Mail } from "lucide-react";
 
+// Contact form with backend integration
 interface FormData {
   name: string;
   email: string;
