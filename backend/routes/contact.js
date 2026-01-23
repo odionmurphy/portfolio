@@ -17,17 +17,24 @@ router.post("/", async (req, res) => {
         .json({ message: "Please provide name, email, and message" });
     }
 
-    // Create contact record
-    const contact = new Contact({
-      name,
-      email,
-      message,
-      phone: phone || null,
-    });
+    // Try to save to database if MongoDB is connected
+    let contactId = null;
+    if (process.env.MONGODB_URI) {
+      try {
+        const contact = new Contact({
+          name,
+          email,
+          message,
+          phone: phone || null,
+        });
+        await contact.save();
+        contactId = contact._id;
+      } catch (dbError) {
+        console.warn("Database save failed, proceeding with email only:", dbError.message);
+      }
+    }
 
-    await contact.save();
-
-    // Try to send emails, but don't fail the request if they fail
+    // Try to send emails
     try {
       // Send confirmation email to user
       await sendEmail({
@@ -36,34 +43,34 @@ router.post("/", async (req, res) => {
         html: `
           <h3>Thank you, ${name}!</h3>
           <p>We have received your message and will get back to you soon.</p>
-          <p>Message ID: ${contact._id}</p>
+          <p>We'll respond as soon as possible.</p>
         `,
       });
 
       // Send notification email to admin
-      await sendEmail({
-        to: process.env.EMAIL_USER,
-        subject: `New Contact Form Submission from ${name}`,
-        html: `
-          <h3>New Message from Portfolio</h3>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
-          <p><strong>Message:</strong></p>
-          <p>${message}</p>
-          <p><strong>Message ID:</strong> ${contact._id}</p>
-          <p><a href="${process.env.ADMIN_URL}/messages/${contact._id}">View in Dashboard</a></p>
-        `,
-      });
+      if (process.env.EMAIL_USER) {
+        await sendEmail({
+          to: process.env.EMAIL_USER,
+          subject: `New Contact Form Submission from ${name}`,
+          html: `
+            <h3>New Message from Portfolio</h3>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
+            <p><strong>Message:</strong></p>
+            <p>${message}</p>
+          `,
+        });
+      }
     } catch (emailError) {
-      // Log email error but continue - form was submitted successfully
       console.warn("Email notification failed:", emailError.message);
+      // Don't fail the request if email fails
     }
 
     res.status(201).json({
       success: true,
       message: "Your message has been sent successfully",
-      contactId: contact._id,
+      contactId: contactId,
     });
   } catch (error) {
     console.error("Contact form error:", error);
