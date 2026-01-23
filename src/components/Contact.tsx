@@ -52,6 +52,9 @@ const Contact: React.FC = () => {
     try {
       const apiUrl =
         (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+      
+      console.log("Sending message to:", `${apiUrl}/api/contact`);
+      
       const response = await fetch(`${apiUrl}/api/contact`, {
         method: "POST",
         headers: {
@@ -61,7 +64,10 @@ const Contact: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to send message");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Server error: ${response.status}`
+        );
       }
 
       const data = await response.json();
@@ -70,7 +76,10 @@ const Contact: React.FC = () => {
       setFormData({ name: "", email: "", message: "", phone: "" });
     } catch (err: any) {
       console.error("Error:", err);
-      setError("Something went wrong. Please try again.");
+      setError(
+        err.message ||
+        "Failed to send message. Please check your connection or try again later."
+      );
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setSuccess(false), 6000);
