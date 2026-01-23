@@ -51,10 +51,13 @@ const Contact: React.FC = () => {
 
     try {
       const apiUrl =
-        (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
-      
+        (import.meta.env.VITE_API_URL as string) ||
+        "https://portfolio-backend-uy9a.onrender.com" ||
+        "http://localhost:5000";
+
+      console.log("API URL:", apiUrl);
       console.log("Sending message to:", `${apiUrl}/api/contact`);
-      
+
       const response = await fetch(`${apiUrl}/api/contact`, {
         method: "POST",
         headers: {
@@ -66,7 +69,7 @@ const Contact: React.FC = () => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || `Server error: ${response.status}`
+          errorData.message || `Server error: ${response.status}`,
         );
       }
 
@@ -78,7 +81,7 @@ const Contact: React.FC = () => {
       console.error("Error:", err);
       setError(
         err.message ||
-        "Failed to send message. Please check your connection or try again later."
+          "Failed to send message. Please check your connection or try again later.",
       );
     } finally {
       setIsSubmitting(false);
