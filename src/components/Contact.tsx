@@ -193,7 +193,7 @@ const Contact: React.FC = () => {
 
         <div className="flex justify-center gap-6 mt-8 text-gray-400">
           <a
-            href="https://github.com/yourusername"
+            href="https://github.com/odionmurphy"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 hover:text-gray-200 transition"
