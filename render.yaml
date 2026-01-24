@@ -34,11 +34,6 @@ services:
       - key: PORT
         value: 10000
       - key: FRONTEND_URL
-        fromService:
-          name: portfolio-frontend
-          type: web_url
+        sync: false
       - key: ADMIN_URL
-        fromService:
-          name: portfolio-frontend
-          type: web_url
-          property: url
+        sync: false
