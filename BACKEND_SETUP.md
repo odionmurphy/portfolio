@@ -373,7 +373,7 @@ git add .
 git commit -m "Initial commit: Full-stack portfolio with backend"
 
 # Create GitHub repo online first, then:
-git remote add origin https://github.com/YOUR_USERNAME/portfolio.git
+git remote add origin https://github.com/odionmurphy/portfolio.git
 git branch -M main
 git push -u origin main
 

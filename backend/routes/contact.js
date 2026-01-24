@@ -30,7 +30,10 @@ router.post("/", async (req, res) => {
         await contact.save();
         contactId = contact._id;
       } catch (dbError) {
-        console.warn("Database save failed, proceeding with email only:", dbError.message);
+        console.warn(
+          "Database save failed, proceeding with email only:",
+          dbError.message,
+        );
       }
     }
 

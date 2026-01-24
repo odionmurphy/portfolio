@@ -1,15 +1,16 @@
-# Deployment Guide
+# Deployment Guide (Render)
 
-Complete guide to deploy your portfolio application to production.
+Complete guide to deploy your portfolio application to production using Render for both backend and frontend.
 
 ## Table of Contents
 
 1. [GitHub Setup](#github-setup)
-2. [Backend Deployment (Render)](#backend-deployment-render)
-3. [Frontend Deployment (Vercel)](#frontend-deployment-vercel)
-4. [Database Setup (MongoDB Atlas)](#database-setup-mongodb-atlas)
-5. [Email Configuration](#email-configuration)
-6. [Post-Deployment](#post-deployment)
+2. [Render Setup](#render-setup)
+3. [Backend Deployment](#backend-deployment)
+4. [Frontend Deployment](#frontend-deployment)
+5. [Database Setup (MongoDB Atlas)](#database-setup-mongodb-atlas)
+6. [Email Configuration](#email-configuration)
+7. [Post-Deployment](#post-deployment)
 
 ---
 
@@ -28,7 +29,7 @@ git add .
 git commit -m "Initial commit: Full-stack portfolio application"
 
 # Add remote repository
-git remote add origin https://github.com/YOUR_USERNAME/portfolio.git
+git remote add origin https://github.com/odionmurphy/portfolio.git
 
 # Create main branch
 git branch -M main
@@ -49,29 +50,9 @@ git status
 
 ---
 
-## Backend Deployment (Render)
+## Render Setup
 
-### Step 1: Prepare Backend
-
-Ensure `backend/package.json` has proper start script:
-
-```json
-{
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
-  }
-}
-```
-
-### Step 2: Create Render Account
-
-1. Go to [https://render.com](https://render.com)
-2. Click "Sign up"
-3. Connect with GitHub
-4. Authorize Render to access your repositories
-
-### Step 3: Deploy Backend Service
+### Manual Backend Setup (if not using render.yaml)
 
 1. In Render dashboard, click **"New +"** → **"Web Service"**
 2. Select your portfolio repository
@@ -83,8 +64,30 @@ Ensure `backend/package.json` has proper start script:
    - **Start Command**: `cd backend && npm start`
 4. Click **"Create Web Service"**
 
-### Step 4: Set Environment Variables
+### Backend Environment Variables
 
+In Render dashboard, go to your service → **Environment**, add:
+
+| Variable         | Value                                 |
+| ---------------- | ------------------------------------- |
+| `MONGODB_URI`    | Your MongoDB connection string        |
+| `JWT_SECRET`     | A strong random string (change this!) |
+| `RESEND_API_KEY` | Your Resend API key (optional)        |
+| `EMAIL_SERVICE`  | `gmail` (or leave empty)              |
+| `EMAIL_USER`     | Your email address                    |
+| `EMAIL_PASSWORD` | Your Gmail app password               |
+| `FRONTEND_URL`   | Your Render frontend URL              |
+| `ADMIN_URL`      | Your Render frontend URL + `/admin`   |
+| `NODE_ENV`       | `production`                          |
+| `PORT`           | `10000`                               |
+
+### Backend Deployment
+
+- Render automatically deploys when you push to GitHub
+- Monitor deployment in Render dashboard
+- Once complete, you'll have a URL like: `https://portfolio-backend-xxxx.onrender.com`
+
+**Save your backend URL for the frontend setup**
 In Render dashboard, go to your service → **Environment**:
 
 ```
@@ -130,54 +133,55 @@ PORT=10000
 1. **Project Name**: `portfolio`
 2. **Framework Preset**: `Vite`
 3. **Root Directory**: `./` (default)
-4. **Build Command**: `npm run build` (should auto-detect)
-5. **Output Directory**: `dist` (should auto-detect)
-6. Click **"Configure"**
+4. **Build Command**: `nRender Static Site)
 
-### Step 4: Set Environment Variables
+### Automatic Deployment with render.yaml
 
-Add in **Environment Variables**:
+When using `render.yaml`, the frontend deploys as a **Static Site** on Render:
+
+1. The `render.yaml` automatically configures this
+2. Render will run: `npm install && npm run build`
+3. Serves static files from `dist/` folder
+4. Much faster and cost-effective than a web service
+
+### Manual Frontend Setup (if not using render.yaml)
+
+1. In Render dashboard, click **"New +"** → **"Static Site"**
+2. Select your portfolio repository
+3. Configure:
+   - **Name**: `portfolio-frontend`
+   - **Branch**: `main`
+   - **Build Command**: `npm install && npm run build`
+   - **Publish Directory**: `dist`
+4. Click **"Create Static Site"**
+
+### Frontend Environment Variables
+
+In Render dashboard, go to your site → **Environment**, add:
+
+| Variable       | Value                   |
+| -------------- | ----------------------- |
+| `VITE_API_URL` | Your Render backend URL |
+
+Example:
 
 ```
 VITE_API_URL=https://portfolio-backend-xxxx.onrender.com
 ```
 
-Replace `portfolio-backend-xxxx.onrender.com` with your actual Render backend URL.
+### Frontend Deployment
 
-### Step 5: Deploy
+- Render automatically deploys when you push to GitHub
+- Automatic SPA routing is configured in `render.yaml`
+- You'll get a URL like: `https://portfolio-frontend-xxxx.onrender.com`
 
-1. Click **"Deploy"**
-2. Wait for deployment to complete
-3. You'll get a URL like: `https://portfolio-xxxxx.vercel.app`
-
-### Step 6: Update Backend URL (if needed)
+### Update Backend URL (if needed)
 
 If you need to update the backend URL later:
 
-1. Go to Vercel project settings
-2. **Environment Variables**
-3. Update `VITE_API_URL`
-4. Redeploy: Click **"Deployments"** → **"Redeploy"** on latest build
-
----
-
-## Database Setup (MongoDB Atlas)
-
-### Step 1: Create MongoDB Account
-
-1. Go to [https://www.mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
-2. Click **"Start free"**
-3. Create account with email
-4. Verify email
-
-### Step 2: Create Cluster
-
-1. Click **"Create a Deployment"**
-2. Choose **"Free"** tier
-3. Select cloud provider (AWS recommended)
-4. Select region closest to you
-5. Click **"Create Deployment"**
-6. Wait for cluster to be created (~5-10 minutes)
+1. Go to Render site settings
+2. **Environment** → Edit `VITE_API_URL`
+3. **Redeploy** (automatic on next push or manual trigger)
 
 ### Step 3: Create Database User
 
@@ -318,19 +322,19 @@ curl -X POST https://portfolio-backend-xxxx.onrender.com/api/contact \
 
 ### 5. Set Up Auto-Deployment
 
-Both Render and Vercel auto-deploy on GitHub push.
+Render automatically deploys on GitHub push.
 
 Verify in:
 
-- **Render**: Web Service → **"Deploy"** → "GitHub"
-- **Vercel**: Project Settings → **"Git"** → "Deployments"
+- **Render Backend**: Web Service → **"Settings"** → "GitHub"
+- **Render Frontend**: Static Site → **"Settings"** → "GitHub"
+  Render Frontend\*\*:
 
-### 6. Backup & Monitoring
+1. Your Static Site → **"Settings"**
+2. Under "Custom Domain", add domain
+3. Follow DNS configuration instructions
 
-**Database Backups**:
-
-- MongoDB Atlas handles automatic backups
-- Configure in: **Cluster** → **"Backup"**
+**For Render Backendter** → **"Backup"**
 
 **Monitoring**:
 
@@ -357,18 +361,25 @@ Verify in:
 1. Check build log in Render dashboard
 2. Verify `backend/package.json` exists
 3. Check start command: `cd backend && npm start`
-4. View logs: Click service → "Logs"
+4. View logs: Web Service → "Logs"
 
 ### Frontend shows 404 errors
 
-1. Verify `VITE_API_URL` is set correctly
+1. Verify `VITE_API_URL` is set correctly in environment
 2. Check if backend is running
-3. Rebuild frontend: Vercel → "Deployments" → "Redeploy"
+3. Rebuild frontend: Static Site → "Deploys" → Trigger deploy
+4. Check build logs for errors
+
+### Frontend routing returns 404
+
+1. `render.yaml` already handles SPA routing
+2. All routes should rewrite to `index.html`
+3. If issues persist, check Render static site settings
 
 ### Contact form not sending emails
 
-1. Verify email credentials in environment variables
-2. Check backend logs for email errors
+1. Verify email credentials in backend environment variables
+2. Check backend logs for email errors: Web Service → "Logs"
 3. Test API directly with curl
 4. Check spam folder for emails
 
@@ -381,12 +392,12 @@ Verify in:
 
 ### CORS errors
 
-Update backend `server.js`:
+Update backend `server.js` if needed:
 
 ```javascript
 app.use(
   cors({
-    origin: "https://your-vercel-url.vercel.app",
+    origin: "https://your-render-frontend.onrender.com",
     credentials: true,
   }),
 );
