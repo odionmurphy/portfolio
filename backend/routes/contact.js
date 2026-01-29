@@ -7,6 +7,16 @@ const router = express.Router();
 
 // Submit contact form (public)
 router.post("/", async (req, res) => {
+  // Debug: log truncated request body to help identify 502 causes in Render logs
+  try {
+    const bodyPreview = JSON.stringify(req.body).slice(0, 1000);
+    console.log(
+      `${new Date().toISOString()} - /api/contact bodyPreview: ${bodyPreview}`,
+    );
+  } catch (e) {
+    console.warn("Could not stringify request body for debug:", e.message);
+  }
+
   try {
     const { name, email, message, phone } = req.body;
 
@@ -37,44 +47,51 @@ router.post("/", async (req, res) => {
       }
     }
 
-    // Try to send emails
-    try {
-      // Send confirmation email to user
-      await sendEmail({
-        to: email,
-        subject: "We received your message",
-        html: `
-          <h3>Thank you, ${name}!</h3>
-          <p>We have received your message and will get back to you soon.</p>
-          <p>We'll respond as soon as possible.</p>
-        `,
-      });
-
-      // Send notification email to admin
-      if (process.env.EMAIL_USER) {
-        await sendEmail({
-          to: process.env.EMAIL_USER,
-          subject: `New Contact Form Submission from ${name}`,
-          html: `
-            <h3>New Message from Portfolio</h3>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
-            <p><strong>Message:</strong></p>
-            <p>${message}</p>
-          `,
-        });
-      }
-    } catch (emailError) {
-      console.warn("Email notification failed:", emailError.message);
-      // Don't fail the request if email fails
-    }
-
+    // Respond to client immediately
     res.status(201).json({
       success: true,
       message: "Your message has been sent successfully",
       contactId: contactId,
     });
+
+    // Try to send emails asynchronously (fire-and-forget)
+    // These runs in background and won't block or crash the request
+    (async () => {
+      try {
+        // Send confirmation email to user
+        await sendEmail({
+          to: email,
+          subject: "We received your message",
+          html: `
+            <h3>Thank you, ${name}!</h3>
+            <p>We have received your message and will get back to you soon.</p>
+            <p>We'll respond as soon as possible.</p>
+          `,
+        }).catch((err) =>
+          console.warn("User confirmation email failed:", err.message),
+        );
+
+        // Send notification email to admin (if configured)
+        if (process.env.EMAIL_USER) {
+          await sendEmail({
+            to: process.env.EMAIL_USER,
+            subject: `New Contact Form Submission from ${name}`,
+            html: `
+              <h3>New Message from Portfolio</h3>
+              <p><strong>Name:</strong> ${name}</p>
+              <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
+              <p><strong>Message:</strong></p>
+              <p>${message}</p>
+            `,
+          }).catch((err) =>
+            console.warn("Admin notification email failed:", err.message),
+          );
+        }
+      } catch (e) {
+        console.warn("Background email process error:", e.message || e);
+      }
+    })();
   } catch (error) {
     console.error("Contact form error:", error);
     res.status(500).json({ message: "Failed to submit contact form" });
