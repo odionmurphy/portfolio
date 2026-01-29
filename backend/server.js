@@ -12,8 +12,18 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Increase JSON body limit to avoid PayloadTooLarge errors seen on some hosts
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({ extended: true, limit: "100kb" }));
+
+// Simple request logger to help troubleshoot 502s on Render
+app.use((req, res, next) => {
+  console.log(
+    `${new Date().toISOString()} - ${req.method} ${req.originalUrl} - Content-Length: ${req.headers["content-length"] || "unknown"}`,
+  );
+  next();
+});
+
 app.use(
   cors({
     origin: [
@@ -66,6 +76,15 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+// Process-level error handlers to avoid crashes on unhandled errors
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+});
 
 app.listen(PORT, () => {
   console.log(`✓ Server running on http://localhost:${PORT}`);
