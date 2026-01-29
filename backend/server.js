@@ -36,6 +36,16 @@ app.use(
   }),
 );
 
+// Body-parser error handler (e.g., PayloadTooLarge)
+app.use((err, req, res, next) => {
+  if (err && (err.type === "entity.too.large" || err.status === 413)) {
+    console.warn("Payload too large:", err.message || err);
+    return res.status(413).json({ message: "Payload too large" });
+  }
+  // If not a body parsing error, forward to the main error handler
+  return next(err);
+});
+
 // Connect to MongoDB
 if (process.env.MONGODB_URI) {
   connectDB();
@@ -69,10 +79,21 @@ app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// Error handling middleware
+// Enhanced error handling middleware
 app.use((err, req, res, next) => {
-  console.error("Error:", err);
-  res.status(500).json({ message: "Internal server error" });
+  try {
+    const requestInfo = `${req.method} ${req.originalUrl} - content-length:${req.headers["content-length"] || "unknown"}`;
+    console.error("Error handling request:", requestInfo, err.stack || err);
+    if (!res.headersSent) {
+      res
+        .status(err.status || 500)
+        .json({ message: err.message || "Internal server error" });
+    }
+  } catch (e) {
+    console.error("Error in error handler:", e);
+    if (!res.headersSent)
+      res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 const PORT = process.env.PORT || 5000;
