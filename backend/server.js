@@ -1,11 +1,10 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import mongoose from "mongoose";
 import contactRoutes from "./routes/contact.js";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
-import connectDB from "./config/database.js";
+import { connectDB, prisma } from "./config/database.js";
 
 dotenv.config();
 
@@ -46,12 +45,17 @@ app.use((err, req, res, next) => {
   return next(err);
 });
 
-// Connect to MongoDB
-if (process.env.MONGODB_URI) {
+// Connect to SQL database (Postgres via Prisma)
+if (process.env.DATABASE_URL) {
+  // Attempt to connect but don't exit on failure
   connectDB();
 } else {
-  console.log("MongoDB URI not provided, running without database");
+  console.log("DATABASE_URL not provided, running without database");
 }
+
+// Serve uploaded files (CVs) if present
+import path from "path";
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // API Routes
 app.use("/api/auth", authRoutes);
@@ -59,9 +63,17 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
 
 // Health check endpoint
-app.get("/api/health", (req, res) => {
-  const dbStatus =
-    mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+app.get("/api/health", async (req, res) => {
+  let dbStatus = "disconnected";
+  if (process.env.DATABASE_URL) {
+    try {
+      // Lightweight query to verify DB connectivity
+      await prisma.$queryRaw`SELECT 1`;
+      dbStatus = "connected";
+    } catch (e) {
+      dbStatus = "disconnected";
+    }
+  }
   res.json({
     status: "ok",
     database: dbStatus,

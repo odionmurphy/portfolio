@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import SocialLinks from "./components/SocialLinks";
 import Footer from "./components/Footer";
 import TorchLight from "./components/TorchLight";
+import CursorSmoke from "./components/CursorSmoke";
 
 function AppContent() {
   const location = useLocation();
@@ -50,6 +51,7 @@ function AppContent() {
               <SocialLinks />
               <Footer />
               <TorchLight />
+              <CursorSmoke />
             </>
           }
         />

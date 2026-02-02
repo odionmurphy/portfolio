@@ -1,8 +1,4 @@
-
-
-
 import { motion } from "framer-motion";
-
 
 import React from "react";
 
@@ -35,18 +31,27 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true }}
-  transition={{ duration: 0.5 }}
-     className="group bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/40 transition transform hover:scale-[1.02]"
->
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      role="button"
+      tabIndex={0}
+      onClick={() => onProjectClick(project)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onProjectClick(project);
+        }
+      }}
+      aria-label={`View details for ${project.title}`}
+      className="group bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-yellow-500 hover:shadow-lg hover:shadow-yellow-500/40 transition transform hover:scale-[1.02] cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-500"
+    >
       <div className="relative">
-       <img
-  src={project.image}
-  alt={project.title}
-  className="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-105"
-/>
-
+        <img
+          src={project.image}
+          alt={project.title}
+          className="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-105"
+        />
 
         {project.status && (
           <span className="absolute top-4 right-4 bg-black/70 text-xs px-3 py-1 rounded-full border border-gray-700">
@@ -89,7 +94,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           {project.technologies.map((tech) => (
             <span
               key={tech}
-              className="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-xs border border-blue-500/30"
+              className="bg-yellow-600/20 text-yellow-400 px-3 py-1 rounded-full text-xs border border-yellow-500/30"
             >
               {tech}
             </span>
@@ -100,7 +105,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="flex items-center gap-3 pt-4">
           <button
             onClick={() => onProjectClick(project)}
-            className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded text-sm font-medium transition"
+            className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded text-sm font-medium transition"
           >
             View Details
           </button>

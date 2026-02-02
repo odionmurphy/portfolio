@@ -53,8 +53,8 @@ const Navigation: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           className="flex items-center gap-2 cursor-pointer select-none"
         >
-          <Code className="w-6 h-6 text-blue-400" />
-          <span className="text-2xl font-extrabold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          <Code className="w-6 h-6 text-yellow-400" />
+          <span className="text-2xl font-extrabold bg-gradient-to-r from-yellow-400 to-purple-500 bg-clip-text text-transparent">
             Portfolio
           </span>
         </motion.a>
@@ -74,8 +74,8 @@ const Navigation: React.FC = () => {
                 whileHover={{ y: -2 }}
                 className={`relative font-semibold transition-colors ${
                   isActive
-                    ? "text-blue-400"
-                    : "text-gray-300 hover:text-blue-400"
+                    ? "text-yellow-400"
+                    : "text-gray-300 hover:text-yellow-400"
                 }`}
               >
                 {link.name}
@@ -83,7 +83,7 @@ const Navigation: React.FC = () => {
                 {isActive && (
                   <motion.span
                     layoutId="activeLink"
-                    className="absolute left-0 -bottom-2 h-0.5 w-full bg-blue-400 rounded"
+                    className="absolute left-0 -bottom-2 h-0.5 w-full bg-yellow-400 rounded"
                   />
                 )}
               </motion.a>

@@ -1,7 +1,7 @@
 import express from "express";
-import Contact from "../models/Contact.js";
 import User from "../models/User.js";
 import { protect } from "../middleware/auth.js";
+import { prisma } from "../config/database.js";
 
 const router = express.Router();
 
@@ -22,12 +22,13 @@ router.get("/messages", protect, checkAdmin, async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const messages = await Contact.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    const messages = await prisma.contact.findMany({
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    });
 
-    const total = await Contact.countDocuments();
+    const total = await prisma.contact.count();
 
     res.json({
       messages,
@@ -46,7 +47,9 @@ router.get("/messages", protect, checkAdmin, async (req, res) => {
 // Get single message
 router.get("/messages/:id", protect, checkAdmin, async (req, res) => {
   try {
-    const message = await Contact.findById(req.params.id);
+    const message = await prisma.contact.findUnique({
+      where: { id: req.params.id },
+    });
     if (!message) {
       return res.status(404).json({ message: "Message not found" });
     }
@@ -59,11 +62,10 @@ router.get("/messages/:id", protect, checkAdmin, async (req, res) => {
 // Mark message as read
 router.patch("/messages/:id/read", protect, checkAdmin, async (req, res) => {
   try {
-    const message = await Contact.findByIdAndUpdate(
-      req.params.id,
-      { isRead: true },
-      { new: true },
-    );
+    const message = await prisma.contact.update({
+      where: { id: req.params.id },
+      data: { isRead: true },
+    });
     res.json(message);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -79,16 +81,13 @@ router.post("/messages/:id/reply", protect, checkAdmin, async (req, res) => {
       return res.status(400).json({ message: "Reply message required" });
     }
 
-    const message = await Contact.findByIdAndUpdate(
-      req.params.id,
-      {
+    const message = await prisma.contact.update({
+      where: { id: req.params.id },
+      data: {
         isReplied: true,
-        reply,
-        repliedAt: new Date(),
-        repliedBy: req.user.id,
+        replyMessage: reply,
       },
-      { new: true },
-    );
+    });
 
     res.json(message);
   } catch (error) {
@@ -99,7 +98,7 @@ router.post("/messages/:id/reply", protect, checkAdmin, async (req, res) => {
 // Delete message
 router.delete("/messages/:id", protect, checkAdmin, async (req, res) => {
   try {
-    await Contact.findByIdAndDelete(req.params.id);
+    await prisma.contact.delete({ where: { id: req.params.id } });
     res.json({ message: "Message deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -168,9 +167,13 @@ router.delete("/users/:id", protect, checkAdmin, async (req, res) => {
 // Get dashboard statistics
 router.get("/stats", protect, checkAdmin, async (req, res) => {
   try {
-    const totalMessages = await Contact.countDocuments();
-    const unreadMessages = await Contact.countDocuments({ isRead: false });
-    const repliedMessages = await Contact.countDocuments({ isReplied: true });
+    const totalMessages = await prisma.contact.count();
+    const unreadMessages = await prisma.contact.count({
+      where: { isRead: false },
+    });
+    const repliedMessages = await prisma.contact.count({
+      where: { isReplied: true },
+    });
     const totalUsers = await User.countDocuments();
 
     res.json({

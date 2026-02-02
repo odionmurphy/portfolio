@@ -16,7 +16,7 @@ services:
     buildCommand: cd backend && npm install
     startCommand: cd backend && npm start
     envVars:
-      - key: MONGODB_URI
+      - key: DATABASE_URL
         sync: false
       - key: RESEND_API_KEY
         sync: false

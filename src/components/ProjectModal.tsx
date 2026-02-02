@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Project } from "./ProjectCard";
 
 interface Props {
@@ -7,14 +7,19 @@ interface Props {
 }
 
 const ProjectModal: React.FC<Props> = ({ project, onClose }) => {
+  const [imageOpen, setImageOpen] = useState(false);
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (imageOpen) setImageOpen(false);
+        else onClose();
+      }
     };
 
     document.addEventListener("keydown", handleEsc);
     return () => document.removeEventListener("keydown", handleEsc);
-  }, [onClose]);
+  }, [onClose, imageOpen]);
 
   return (
     <div
@@ -27,8 +32,39 @@ const ProjectModal: React.FC<Props> = ({ project, onClose }) => {
         onClick={(e) => e.stopPropagation()}
         className="bg-gray-900 max-w-3xl w-full rounded-xl p-8 border border-gray-800"
       >
+        {project.image && (
+          <div className="mb-6 rounded-md overflow-hidden">
+            <img
+              src={project.image}
+              alt={project.title}
+              onClick={() => setImageOpen(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") setImageOpen(true);
+              }}
+              className="w-full h-64 object-cover rounded-md cursor-zoom-in"
+            />
+          </div>
+        )}
+
         <h2 className="text-3xl font-bold mb-4">{project.title}</h2>
 
+        {imageOpen && (
+          <div
+            className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setImageOpen(false)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <img
+              src={project.image}
+              alt={project.title}
+              className="max-w-full max-h-[90vh] object-contain rounded-md shadow-xl cursor-zoom-out"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
         <p className="text-gray-300 mb-6">{project.description}</p>
 
         {project.highlights && (
@@ -41,7 +77,7 @@ const ProjectModal: React.FC<Props> = ({ project, onClose }) => {
 
         <button
           onClick={onClose}
-          className="mt-4 bg-blue-500 px-6 py-2 rounded"
+          className="mt-4 bg-yellow-500 px-6 py-2 rounded"
         >
           Close
         </button>
@@ -51,4 +87,3 @@ const ProjectModal: React.FC<Props> = ({ project, onClose }) => {
 };
 
 export default ProjectModal;
-

@@ -14,10 +14,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendEmail = async ({ to, subject, html, text }) => {
+export const sendEmail = async ({ to, subject, html, text, attachments }) => {
   try {
     if (resend) {
-      // Use Resend
+      // Resend doesn't support arbitrary attachments directly in the same way as nodemailer.
+      // Fall back to including attachment links in the email HTML when available.
       await resend.emails.send({
         from: process.env.EMAIL_FROM || "noreply@resend.dev",
         to,
@@ -26,13 +27,14 @@ export const sendEmail = async ({ to, subject, html, text }) => {
         text,
       });
     } else {
-      // Use Nodemailer
+      // Use Nodemailer and pass attachments if provided
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to,
         subject,
         html,
         text,
+        attachments,
       });
     }
     console.log(`Email sent to ${to}`);

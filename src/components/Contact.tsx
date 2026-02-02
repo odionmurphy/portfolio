@@ -43,6 +43,13 @@ const Contact: React.FC = () => {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
+  const [cvFile, setCvFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) setCvFile(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
@@ -53,19 +60,36 @@ const Contact: React.FC = () => {
     try {
       const apiUrl =
         (import.meta.env.VITE_API_URL as string) ||
-        "https://portfolio-backend-uy9a.onrender.com" ||
+        (typeof window !== "undefined"
+          ? window.location.origin
+          : "http://localhost:5000") ||
         "http://localhost:5000";
 
       console.log("API URL:", apiUrl);
-      console.log("Sending message to:", `${apiUrl}/api/contact`);
 
-      const response = await fetch(`${apiUrl}/api/contact`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      let response: Response;
+
+      if (cvFile) {
+        const form = new FormData();
+        form.append("name", formData.name);
+        form.append("email", formData.email);
+        form.append("phone", formData.phone || "");
+        form.append("message", formData.message);
+        form.append("cv", cvFile, cvFile.name);
+
+        response = await fetch(`${apiUrl}/api/contact`, {
+          method: "POST",
+          body: form,
+        });
+      } else {
+        response = await fetch(`${apiUrl}/api/contact`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -78,6 +102,7 @@ const Contact: React.FC = () => {
       console.log("Message sent:", data);
       setSuccess(true);
       setFormData({ name: "", email: "", message: "", phone: "" });
+      setCvFile(null);
     } catch (err: any) {
       console.error("Error:", err);
       setError(
@@ -92,8 +117,49 @@ const Contact: React.FC = () => {
   // ...existing code...
 
   return (
-    <section id="contact" className="bg-gray-900 py-20">
-      <div className="max-w-2xl mx-auto px-4">
+    <section
+      id="contact"
+      className="relative overflow-hidden bg-gray-900 py-20"
+    >
+      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+        <svg
+          className="w-full h-full"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <radialGradient id="g1" cx="30%" cy="25%" r="40%">
+              <stop offset="0%" stopColor="#FACC15" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="#FACC15" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="g2" cx="80%" cy="85%" r="40%">
+              <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+            </radialGradient>
+            <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="12" />
+            </filter>
+          </defs>
+
+          <circle
+            cx="20"
+            cy="20"
+            r="30"
+            fill="url(#g1)"
+            filter="url(#blur)"
+            opacity="0.18"
+          />
+          <circle
+            cx="85"
+            cy="85"
+            r="30"
+            fill="url(#g2)"
+            filter="url(#blur)"
+            opacity="0.18"
+          />
+        </svg>
+      </div>
+      <div className="relative z-10 max-w-2xl mx-auto px-4">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -121,7 +187,7 @@ const Contact: React.FC = () => {
             placeholder="Your name"
             className={`w-full px-4 py-3 rounded bg-gray-700 border ${
               errors.name ? "border-red-500" : "border-gray-600"
-            } focus:ring-2 focus:ring-blue-500 outline-none`}
+            } focus:ring-2 focus:ring-yellow-500 outline-none`}
           />
           {errors.name && (
             <p className="text-red-400 text-sm mt-1">{errors.name}</p>
@@ -134,7 +200,7 @@ const Contact: React.FC = () => {
             placeholder="you@example.com"
             className={`w-full px-4 py-3 rounded bg-gray-700 border ${
               errors.email ? "border-red-500" : "border-gray-600"
-            } focus:ring-2 focus:ring-blue-500 outline-none`}
+            } focus:ring-2 focus:ring-yellow-500 outline-none`}
           />
           {errors.email && (
             <p className="text-red-400 text-sm mt-1">{errors.email}</p>
@@ -146,7 +212,7 @@ const Contact: React.FC = () => {
             value={formData.phone}
             onChange={handleChange}
             placeholder="Your phone number (optional)"
-            className="w-full px-4 py-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full px-4 py-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-yellow-500 outline-none"
           />
 
           <textarea
@@ -157,16 +223,34 @@ const Contact: React.FC = () => {
             placeholder="Tell me about your project..."
             className={`w-full px-4 py-3 rounded bg-gray-700 border ${
               errors.message ? "border-red-500" : "border-gray-600"
-            } focus:ring-2 focus:ring-blue-500 outline-none`}
+            } focus:ring-2 focus:ring-yellow-500 outline-none`}
           />
           {errors.message && (
             <p className="text-red-400 text-sm mt-1">{errors.message}</p>
           )}
 
+          {/* CV Upload */}
+          <div className="mt-2">
+            <label className="block text-sm text-gray-300 mb-2">
+              Attach CV (optional)
+            </label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={handleFileChange}
+              className="w-full text-sm text-gray-200"
+            />
+            {cvFile && (
+              <p className="text-sm text-gray-300 mt-2">
+                Selected: {cvFile.name}
+              </p>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 py-3 rounded-lg font-semibold transition"
+            className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-400 py-3 rounded-lg font-semibold transition mt-4"
           >
             {isSubmitting ? "Sending..." : "Send Message"}
           </button>
@@ -204,7 +288,7 @@ const Contact: React.FC = () => {
             href="https://linkedin.com/in/yourusername"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 hover:text-blue-400 transition"
+            className="flex items-center gap-1 hover:text-yellow-400 transition"
           >
             <Linkedin size={18} /> LinkedIn
           </a>

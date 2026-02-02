@@ -20,7 +20,7 @@ const socials: SocialLink[] = [
     name: "LinkedIn",
     icon: Linkedin,
     url: "https://linkedin.com/in/yourusername",
-    color: "hover:text-blue-400",
+    color: "hover:text-yellow-400",
   },
   {
     name: "Email",

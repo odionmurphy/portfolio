@@ -8,7 +8,7 @@ const Hero: React.FC = () => {
       className="relative max-w-6xl mx-auto px-4 py-28 text-center overflow-hidden"
     >
       {/* Background Glow */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-500/10 via-transparent to-transparent" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-yellow-500/10 via-transparent to-transparent" />
 
       {/* Profile */}
       <motion.div
@@ -21,7 +21,7 @@ const Hero: React.FC = () => {
           <img
             src="/Facebook.jpg"
             alt="Profile photo of frontend developer"
-            className="w-40 h-40 rounded-full object-cover border-4 border-blue-400 shadow-xl shadow-blue-500/30"
+            className="w-40 h-40 rounded-full object-cover border-4 border-yellow-400 shadow-xl shadow-yellow-500/30"
           />
           <span className="absolute bottom-2 right-2 bg-green-500 text-xs px-2 py-1 rounded-full">
             Open to Work
@@ -37,7 +37,7 @@ const Hero: React.FC = () => {
         className="text-5xl md:text-6xl font-extrabold mb-6"
       >
         Junior{" "}
-        <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-yellow-400 to-purple-500 bg-clip-text text-transparent">
           Frontend Developer
         </span>
       </motion.h1>
@@ -64,13 +64,13 @@ const Hero: React.FC = () => {
       >
         <a
           href="#portfolio"
-          className="bg-blue-500 hover:bg-blue-600 px-8 py-3 rounded-lg font-semibold transition transform hover:scale-105"
+          className="bg-yellow-500 hover:bg-yellow-600 px-8 py-3 rounded-lg font-semibold transition transform hover:scale-105"
         >
           View Projects
         </a>
         <a
           href="#contact"
-          className="border border-gray-600 px-8 py-3 rounded-lg hover:border-blue-400"
+          className="border border-gray-600 px-8 py-3 rounded-lg hover:border-yellow-400"
         >
           Contact
         </a>
