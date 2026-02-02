@@ -12,6 +12,7 @@ model Contact {
   email        String
   message      String
   phone        String?
+  cvUrl        String?
   isRead       Boolean  @default(false)
   isReplied    Boolean  @default(false)
   replyMessage String?

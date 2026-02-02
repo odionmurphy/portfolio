@@ -22,6 +22,7 @@ const Contact: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
 
   const validate = (): boolean => {
     const newErrors: Partial<FormData> = {};
@@ -103,6 +104,7 @@ const Contact: React.FC = () => {
       setSuccess(true);
       setFormData({ name: "", email: "", message: "", phone: "" });
       setCvFile(null);
+      setUploadedFileUrl(data.fileUrl || null);
     } catch (err: any) {
       console.error("Error:", err);
       setError(
@@ -256,13 +258,25 @@ const Contact: React.FC = () => {
           </button>
 
           {success && (
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-green-400 text-center text-sm mt-2"
+              className="text-center text-sm mt-2"
             >
-              Message sent successfully.
-            </motion.p>
+              <p className="text-green-400">Message sent successfully.</p>
+              {uploadedFileUrl && (
+                <p className="mt-1">
+                  <a
+                    href={uploadedFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-yellow-400 underline"
+                  >
+                    View uploaded CV
+                  </a>
+                </p>
+              )}
+            </motion.div>
           )}
           {error && (
             <motion.p

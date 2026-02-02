@@ -71,10 +71,46 @@ router.post("/", upload.single("cv"), async (req, res) => {
       }
     }
 
-    // If file uploaded, build a public URL (served under /uploads)
-    const fileUrl = req.file
-      ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
-      : null;
+    // If file uploaded, build a public URL (served under /uploads) or upload to S3 when configured
+    let fileUrl = null;
+
+    if (req.file) {
+      try {
+        if (
+          process.env.AWS_S3_BUCKET &&
+          process.env.AWS_REGION &&
+          process.env.AWS_ACCESS_KEY_ID &&
+          process.env.AWS_SECRET_ACCESS_KEY
+        ) {
+          // lazy import the storage helper only when needed
+          const { uploadToS3, removeLocalFile } =
+            await import("../utils/storage.js");
+          const key = `cv-${Date.now()}-${req.file.filename}`;
+          fileUrl = await uploadToS3(req.file.path, key, req.file.mimetype);
+          // Remove the local copy once uploaded
+          removeLocalFile(req.file.path).catch((e) =>
+            console.warn("Failed to remove local file:", e.message || e),
+          );
+        } else {
+          fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+        }
+      } catch (e) {
+        console.warn("File upload handling failed:", e.message || e);
+        fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+      }
+    }
+
+    // Persist cvUrl to DB if available
+    if (process.env.DATABASE_URL && contactId && fileUrl) {
+      try {
+        await prisma.contact.update({
+          where: { id: contactId },
+          data: { cvUrl: fileUrl },
+        });
+      } catch (e) {
+        console.warn("Failed to persist cvUrl to DB:", e.message || e);
+      }
+    }
 
     // Respond to client immediately
     res.status(201).json({
@@ -119,7 +155,17 @@ router.post("/", upload.single("cv"), async (req, res) => {
             html: adminHtml,
           };
 
-          if (req.file) {
+          // If the file was stored locally, attach it to the admin email.
+          // When S3 is configured we won't attach the binary (we include the public S3 link above).
+          if (
+            req.file &&
+            !(
+              process.env.AWS_S3_BUCKET &&
+              process.env.AWS_REGION &&
+              process.env.AWS_ACCESS_KEY_ID &&
+              process.env.AWS_SECRET_ACCESS_KEY
+            )
+          ) {
             mailOptions.attachments = [
               { filename: req.file.originalname, path: req.file.path },
             ];
