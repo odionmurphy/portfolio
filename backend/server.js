@@ -29,9 +29,18 @@ app.use(
       // Allow curl and server-side requests (no origin)
       if (!origin) return cb(null, true);
 
-      // Allow explicit configured URLs
+      // Build allowed list from envs and defaults
+      const envList = (
+        process.env.FRONTEND_URLS ||
+        process.env.FRONTEND_URL ||
+        ""
+      )
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
       const allowed = [
-        process.env.FRONTEND_URL,
+        ...envList,
         process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
         "http://localhost:5173",
         "http://localhost:5174",
@@ -39,14 +48,15 @@ app.use(
         "http://localhost:3000",
       ].filter(Boolean);
 
-      // Allow any localhost origin (dev flexibility)
-      if (
+      // Allow explicit matches, localhost, and Render subdomains (.onrender.com)
+      const isAllowed =
         allowed.includes(origin) ||
-        /^https?:\/\/localhost(:\d+)?$/.test(origin)
-      ) {
-        return cb(null, true);
-      }
+        /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+        /^https?:\/\/[\w-]+\.onrender\.com(:\d+)?$/.test(origin);
 
+      if (isAllowed) return cb(null, true);
+
+      console.warn("CORS rejected origin:", origin);
       return cb(new Error("CORS not allowed"));
     },
     credentials: true,
