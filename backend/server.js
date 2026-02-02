@@ -25,12 +25,30 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: [
-      process.env.FRONTEND_URL || "http://localhost:5173",
-      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
-      "http://localhost:5173",
-      "http://localhost:3000",
-    ].filter(Boolean),
+    origin: (origin, cb) => {
+      // Allow curl and server-side requests (no origin)
+      if (!origin) return cb(null, true);
+
+      // Allow explicit configured URLs
+      const allowed = [
+        process.env.FRONTEND_URL,
+        process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:3000",
+      ].filter(Boolean);
+
+      // Allow any localhost origin (dev flexibility)
+      if (
+        allowed.includes(origin) ||
+        /^https?:\/\/localhost(:\d+)?$/.test(origin)
+      ) {
+        return cb(null, true);
+      }
+
+      return cb(new Error("CORS not allowed"));
+    },
     credentials: true,
   }),
 );
