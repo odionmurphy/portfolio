@@ -4,11 +4,12 @@ import { motion } from "framer-motion";
 import { LogOut, MessageSquare, Users, Mail, CheckCircle } from "lucide-react";
 
 interface Message {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   message: string;
   phone?: string;
+  cvUrl?: string;
   isRead: boolean;
   isReplied: boolean;
   createdAt: string;
@@ -90,7 +91,7 @@ export default function AdminDashboard() {
 
     try {
       const response = await fetch(
-        `${apiUrl}/api/admin/messages/${selectedMessage._id}/reply`,
+        `${apiUrl}/api/admin/messages/${selectedMessage.id}/reply`,
         {
           method: "POST",
           headers: {
@@ -221,7 +222,7 @@ export default function AdminDashboard() {
             <div className="divide-y divide-slate-700">
               {messages.map((msg) => (
                 <div
-                  key={msg._id}
+                  key={msg.id}
                   onClick={() => setSelectedMessage(msg)}
                   className={`p-6 cursor-pointer hover:bg-slate-700/50 transition ${
                     !msg.isRead ? "bg-slate-700/30" : ""
@@ -246,6 +247,20 @@ export default function AdminDashboard() {
                       {msg.phone && (
                         <p className="text-slate-400 text-sm">{msg.phone}</p>
                       )}
+
+                      {msg.cvUrl && (
+                        <p className="text-slate-400 text-sm">
+                          <a
+                            href={msg.cvUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-yellow-400 underline"
+                          >
+                            View CV
+                          </a>
+                        </p>
+                      )}
+
                       <p className="text-slate-300 mt-2 line-clamp-2">
                         {msg.message}
                       </p>
@@ -279,6 +294,18 @@ export default function AdminDashboard() {
                   {selectedMessage.phone && (
                     <p className="text-slate-400">{selectedMessage.phone}</p>
                   )}
+                  {selectedMessage.cvUrl && (
+                    <p className="text-slate-400">
+                      <a
+                        href={selectedMessage.cvUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-yellow-400 underline"
+                      >
+                        Download CV
+                      </a>
+                    </p>
+                  )}{" "}
                 </div>
                 <button
                   onClick={() => setSelectedMessage(null)}
@@ -299,7 +326,7 @@ export default function AdminDashboard() {
 
               {!selectedMessage.isRead && (
                 <button
-                  onClick={() => handleMarkAsRead(selectedMessage._id)}
+                  onClick={() => handleMarkAsRead(selectedMessage.id)}
                   className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded"
                 >
                   Mark as Read
