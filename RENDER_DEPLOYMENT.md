@@ -41,7 +41,7 @@ Deploy each service individually in Render dashboard.
 Set in Render dashboard for `portfolio-backend` service:
 
 ```
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/portfolio?retryWrites=true&w=majority
+DATABASE_URL=postgres://username:password@host:5432/portfolio
 JWT_SECRET=your-random-secure-string-here
 RESEND_API_KEY=re_xxxxx (optional, for Resend email)
 EMAIL_SERVICE=gmail (or leave empty)
@@ -142,19 +142,19 @@ Open https://portfolio-frontend-xxxx.onrender.com in browser
 
 ## Environment Variables Reference
 
-| Variable         | Service  | Required | Purpose                                |
-| ---------------- | -------- | -------- | -------------------------------------- |
-| `MONGODB_URI`    | Backend  | ✅       | MongoDB connection string              |
-| `JWT_SECRET`     | Backend  | ✅       | JWT signing secret (use random string) |
-| `NODE_ENV`       | Backend  | ✅       | Should be `production`                 |
-| `PORT`           | Backend  | ✅       | Should be `10000`                      |
-| `EMAIL_SERVICE`  | Backend  | ❌       | Email provider (gmail, resend)         |
-| `EMAIL_USER`     | Backend  | ❌       | Email address if using Gmail           |
-| `EMAIL_PASSWORD` | Backend  | ❌       | Gmail app password                     |
-| `RESEND_API_KEY` | Backend  | ❌       | Resend API key if using Resend         |
-| `FRONTEND_URL`   | Backend  | ⚠️       | Frontend URL (for CORS)                |
-| `ADMIN_URL`      | Backend  | ⚠️       | Admin page URL (for emails)            |
-| `VITE_API_URL`   | Frontend | ✅       | Backend API URL                        |
+| Variable         | Service  | Required | Purpose                                   |
+| ---------------- | -------- | -------- | ----------------------------------------- |
+| `DATABASE_URL`   | Backend  | ✅       | Postgres connection string (DATABASE_URL) |
+| `JWT_SECRET`     | Backend  | ✅       | JWT signing secret (use random string)    |
+| `NODE_ENV`       | Backend  | ✅       | Should be `production`                    |
+| `PORT`           | Backend  | ✅       | Should be `10000`                         |
+| `EMAIL_SERVICE`  | Backend  | ❌       | Email provider (gmail, resend)            |
+| `EMAIL_USER`     | Backend  | ❌       | Email address if using Gmail              |
+| `EMAIL_PASSWORD` | Backend  | ❌       | Gmail app password                        |
+| `RESEND_API_KEY` | Backend  | ❌       | Resend API key if using Resend            |
+| `FRONTEND_URL`   | Backend  | ⚠️       | Frontend URL (for CORS)                   |
+| `ADMIN_URL`      | Backend  | ⚠️       | Admin page URL (for emails)               |
+| `VITE_API_URL`   | Frontend | ✅       | Backend API URL                           |
 
 **✅ = Required for deployment**
 **❌ = Optional**

@@ -10,7 +10,8 @@ const About: React.FC = () => {
             <p className="text-gray-300 text-lg leading-relaxed mb-4">
               I'm a passionate junior frontend developer eager to build modern,
               responsive web applications. With a strong foundation in React,
-              TypeScript,Docker, and Tailwind CSS , I create intuitive user experiences.
+              TypeScript,Docker, and Tailwind CSS , I create intuitive user
+              experiences.
             </p>
             <p className="text-gray-300 text-lg leading-relaxed">
               I'm continuously learning and improving my skills through projects
@@ -22,20 +23,20 @@ const About: React.FC = () => {
             <h3 className="text-2xl font-bold mb-4">Quick Facts</h3>
             <ul className="space-y-3 text-gray-300">
               <li>
-                <span className="text-blue-400 font-bold">Experience:</span> 1-2
-                years
+                <span className="text-yellow-400 font-bold">Experience:</span>{" "}
+                1-2 years
               </li>
               <li>
-                <span className="text-blue-400 font-bold">Location:</span> Menden saurland
+                <span className="text-yellow-400 font-bold">Location:</span>{" "}
+                Menden saurland
               </li>
               <li>
-                <span className="text-blue-400 font-bold">Availability:</span>{" "}
+                <span className="text-yellow-400 font-bold">Availability:</span>{" "}
                 Open to opportunities
               </li>
               <li>
-                <span className="text-blue-400 font-bold">Education:</span>{" "}
+                <span className="text-yellow-400 font-bold">Education:</span>{" "}
                 Bootcamp/ Dci-instintude Berlin
-              
               </li>
             </ul>
           </div>

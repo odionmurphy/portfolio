@@ -1,24 +1,47 @@
 import express from "express";
-import Contact from "../models/Contact.js";
+import multer from "multer";
+import fs from "fs";
+import path from "path";
+import { prisma } from "../config/database.js";
 import { sendEmail } from "../utils/email.js";
 import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Submit contact form (public)
-router.post("/", async (req, res) => {
-  // Debug: log truncated request body to help identify 502 causes in Render logs
-  try {
-    const bodyPreview = JSON.stringify(req.body).slice(0, 1000);
-    console.log(
-      `${new Date().toISOString()} - /api/contact bodyPreview: ${bodyPreview}`,
-    );
-  } catch (e) {
-    console.warn("Could not stringify request body for debug:", e.message);
-  }
+// Prepare uploads directory
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const safe = `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
+    cb(null, safe);
+  },
+});
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
+
+// Submit contact form (public) - supports JSON or multipart/form-data with 'cv' file
+router.post("/", upload.single("cv"), async (req, res) => {
   try {
-    const { name, email, message, phone } = req.body;
+    // Log a small preview for debugging
+    try {
+      const preview = req.file
+        ? `[file:${req.file.originalname}] ${JSON.stringify(req.body).slice(0, 500)}`
+        : JSON.stringify(req.body).slice(0, 1000);
+      console.log(
+        `${new Date().toISOString()} - /api/contact preview: ${preview}`,
+      );
+    } catch (e) {
+      console.warn("Could not stringify request body for debug:", e.message);
+    }
+
+    const name = req.body.name || req.body.get?.("name");
+    const email = req.body.email || req.body.get?.("email");
+    const message = req.body.message || req.body.get?.("message");
+    const phone = req.body.phone || req.body.get?.("phone");
 
     // Validation
     if (!name || !email || !message) {
@@ -27,18 +50,19 @@ router.post("/", async (req, res) => {
         .json({ message: "Please provide name, email, and message" });
     }
 
-    // Try to save to database if MongoDB is connected
+    // Try to save to database if DATABASE_URL is provided
     let contactId = null;
-    if (process.env.MONGODB_URI) {
+    if (process.env.DATABASE_URL) {
       try {
-        const contact = new Contact({
-          name,
-          email,
-          message,
-          phone: phone || null,
+        const contact = await prisma.contact.create({
+          data: {
+            name,
+            email,
+            message,
+            phone: phone || null,
+          },
         });
-        await contact.save();
-        contactId = contact._id;
+        contactId = contact.id;
       } catch (dbError) {
         console.warn(
           "Database save failed, proceeding with email only:",
@@ -47,15 +71,20 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // If file uploaded, build a public URL (served under /uploads)
+    const fileUrl = req.file
+      ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
+      : null;
+
     // Respond to client immediately
     res.status(201).json({
       success: true,
       message: "Your message has been sent successfully",
-      contactId: contactId,
+      contactId,
+      fileUrl,
     });
 
     // Try to send emails asynchronously (fire-and-forget)
-    // These runs in background and won't block or crash the request
     (async () => {
       try {
         // Send confirmation email to user
@@ -73,18 +102,30 @@ router.post("/", async (req, res) => {
 
         // Send notification email to admin (if configured)
         if (process.env.EMAIL_USER) {
-          await sendEmail({
+          const adminHtml = `
+            <h3>New Message from Portfolio</h3>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
+            <p><strong>Message:</strong></p>
+            <p>${message}</p>
+            ${fileUrl ? `<p><strong>CV:</strong> <a href="${fileUrl}">${fileUrl}</a></p>` : ""}
+          `;
+
+          // If there's an uploaded CV and we use nodemailer, attach it
+          const mailOptions = {
             to: process.env.EMAIL_USER,
             subject: `New Contact Form Submission from ${name}`,
-            html: `
-              <h3>New Message from Portfolio</h3>
-              <p><strong>Name:</strong> ${name}</p>
-              <p><strong>Email:</strong> ${email}</p>
-              <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
-              <p><strong>Message:</strong></p>
-              <p>${message}</p>
-            `,
-          }).catch((err) =>
+            html: adminHtml,
+          };
+
+          if (req.file) {
+            mailOptions.attachments = [
+              { filename: req.file.originalname, path: req.file.path },
+            ];
+          }
+
+          await sendEmail(mailOptions).catch((err) =>
             console.warn("Admin notification email failed:", err.message),
           );
         }
@@ -101,7 +142,9 @@ router.post("/", async (req, res) => {
 // Get all contacts (admin only)
 router.get("/", protect, async (req, res) => {
   try {
-    const contacts = await Contact.find().sort({ createdAt: -1 });
+    const contacts = await prisma.contact.findMany({
+      orderBy: { createdAt: "desc" },
+    });
     res.status(200).json({
       success: true,
       count: contacts.length,
@@ -115,15 +158,19 @@ router.get("/", protect, async (req, res) => {
 // Get single contact (admin only)
 router.get("/:id", protect, async (req, res) => {
   try {
-    const contact = await Contact.findById(req.params.id);
+    const contact = await prisma.contact.findUnique({
+      where: { id: req.params.id },
+    });
 
     if (!contact) {
       return res.status(404).json({ message: "Contact not found" });
     }
 
     // Mark as read
-    contact.isRead = true;
-    await contact.save();
+    await prisma.contact.update({
+      where: { id: req.params.id },
+      data: { isRead: true },
+    });
 
     res.status(200).json({
       success: true,
@@ -145,15 +192,18 @@ router.put("/:id/reply", protect, async (req, res) => {
         .json({ message: "Please provide a reply message" });
     }
 
-    let contact = await Contact.findById(req.params.id);
+    let contact = await prisma.contact.findUnique({
+      where: { id: req.params.id },
+    });
 
     if (!contact) {
       return res.status(404).json({ message: "Contact not found" });
     }
 
-    contact.replyMessage = replyMessage;
-    contact.isReplied = true;
-    await contact.save();
+    contact = await prisma.contact.update({
+      where: { id: req.params.id },
+      data: { replyMessage: replyMessage, isReplied: true },
+    });
 
     // Send reply email
     await sendEmail({
@@ -179,7 +229,9 @@ router.put("/:id/reply", protect, async (req, res) => {
 // Delete contact (admin only)
 router.delete("/:id", protect, async (req, res) => {
   try {
-    const contact = await Contact.findByIdAndDelete(req.params.id);
+    const contact = await prisma.contact.delete({
+      where: { id: req.params.id },
+    });
 
     if (!contact) {
       return res.status(404).json({ message: "Contact not found" });

@@ -87,7 +87,7 @@ export default function AdminLogin() {
                   onChange={handleChange}
                   placeholder="your@email.com"
                   required
-                  className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500"
                 />
               </div>
             </div>
@@ -106,7 +106,7 @@ export default function AdminLogin() {
                   onChange={handleChange}
                   placeholder="••••••••"
                   required
-                  className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500"
                 />
               </div>
             </div>
@@ -115,7 +115,7 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-6 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white font-medium py-2 rounded flex items-center justify-center gap-2 transition"
+              className="w-full mt-6 bg-yellow-600 hover:bg-yellow-700 disabled:bg-slate-600 text-white font-medium py-2 rounded flex items-center justify-center gap-2 transition"
             >
               <LogIn className="w-5 h-5" />
               {isLoading ? "Signing in..." : "Sign In"}
