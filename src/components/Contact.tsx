@@ -60,11 +60,7 @@ const Contact: React.FC = () => {
 
     try {
       const apiUrl =
-        (import.meta.env.VITE_API_URL as string) ||
-        (typeof window !== "undefined"
-          ? window.location.origin
-          : "http://localhost:5000") ||
-        "http://localhost:5000";
+        (import.meta.env.VITE_API_URL as string) || "http://localhost:5000"; // default to backend API
 
       console.log("API URL:", apiUrl);
 
@@ -104,6 +100,7 @@ const Contact: React.FC = () => {
       setSuccess(true);
       setFormData({ name: "", email: "", message: "", phone: "" });
       setCvFile(null);
+      if (data.fileUrl) setUploadedFileUrl(data.fileUrl);
       setUploadedFileUrl(data.fileUrl || null);
     } catch (err: any) {
       console.error("Error:", err);
