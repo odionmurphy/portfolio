@@ -74,6 +74,13 @@ const Hero: React.FC = () => {
         >
           Contact
         </a>
+        <a
+          href="/cv.pdf"
+          download
+          className="border border-yellow-500 text-yellow-400 px-8 py-3 rounded-lg hover:bg-yellow-500 hover:text-white transition"
+        >
+          Download CV
+        </a>
       </motion.div>
     </section>
   );
