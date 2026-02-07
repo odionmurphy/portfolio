@@ -1,5 +1,4 @@
 import express from "express";
-import multer from "multer";
 import fs from "fs";
 import path from "path";
 import { prisma } from "../config/database.js";
@@ -10,23 +9,10 @@ const router = express.Router();
 
 // Prepare uploads directory
 const uploadsDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const safe = `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
-    cb(null, safe);
-  },
-});
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
-
-// Submit contact form (public) - supports JSON or multipart/form-data with 'cv' file
-router.post("/", upload.single("cv"), async (req, res) => {
+// Submit contact form (public) - JSON payload only
+router.post("/", async (req, res) => {
   try {
-    // Verbose request logging for Render diagnostics
+    // Verbose request logging for diagnostics
     try {
       console.log(`Incoming /api/contact - ${new Date().toISOString()}`);
       console.log("method:", req.method, "url:", req.originalUrl);
@@ -36,29 +22,19 @@ router.post("/", upload.single("cv"), async (req, res) => {
         "content-length:",
         req.headers["content-length"] || "unknown",
       );
-      const preview = req.file
-        ? `[file:${req.file.originalname}] ${JSON.stringify(req.body).slice(0, 500)}`
-        : JSON.stringify(req.body).slice(0, 1000);
-      console.log(`/api/contact preview: ${preview}`);
-      if (req.file)
-        console.log("uploaded file:", req.file.path, req.file.mimetype);
+      console.log(`/api/contact preview: ${JSON.stringify(req.body).slice(0, 1000)}`);
     } catch (e) {
-      console.warn(
-        "Could not stringify request body for debug:",
-        e?.message || e,
-      );
+      console.warn("Could not stringify request body for debug:", e?.message || e);
     }
 
-    const name = req.body.name || req.body.get?.("name");
-    const email = req.body.email || req.body.get?.("email");
-    const message = req.body.message || req.body.get?.("message");
-    const phone = req.body.phone || req.body.get?.("phone");
+    const name = req.body.name;
+    const email = req.body.email;
+    const message = req.body.message;
+    const phone = req.body.phone;
 
     // Validation
     if (!name || !email || !message) {
-      return res
-        .status(400)
-        .json({ message: "Please provide name, email, and message" });
+      return res.status(400).json({ message: "Please provide name, email, and message" });
     }
 
     // Try to save to database if DATABASE_URL is provided
@@ -75,84 +51,27 @@ router.post("/", upload.single("cv"), async (req, res) => {
         });
         contactId = contact.id;
       } catch (dbError) {
-        console.warn(
-          "Database save failed, proceeding with email only:",
-          dbError.message,
-        );
+        console.warn("Database save failed, proceeding with email only:", dbError.message);
       }
     }
 
-    // If file uploaded, build a public URL (served under /uploads) or upload to S3 when configured
-    let fileUrl = null;
-
-    if (req.file) {
-      try {
-        if (
-          process.env.AWS_S3_BUCKET &&
-          process.env.AWS_REGION &&
-          process.env.AWS_ACCESS_KEY_ID &&
-          process.env.AWS_SECRET_ACCESS_KEY
-        ) {
-          // lazy import the storage helper only when needed
-          const { uploadToS3, removeLocalFile } =
-            await import("../utils/storage.js");
-          const key = `cv-${Date.now()}-${req.file.filename}`;
-          fileUrl = await uploadToS3(req.file.path, key, req.file.mimetype);
-          // Remove the local copy once uploaded
-          removeLocalFile(req.file.path).catch((e) =>
-            console.warn("Failed to remove local file:", e.message || e),
-          );
-        } else {
-          fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-        }
-      } catch (e) {
-        console.warn("File upload handling failed:", e.message || e);
-        fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-      }
-    }
-
-    // Persist cvUrl to DB if available
-    if (process.env.DATABASE_URL && contactId && fileUrl) {
-      try {
-        await prisma.contact.update({
-          where: { id: contactId },
-          data: { cvUrl: fileUrl },
-        });
-      } catch (e) {
-        console.warn("Failed to persist cvUrl to DB:", e.message || e);
-      }
-    }
-
-    // Respond to client immediately
-    console.log("Responding 201 to client", { contactId, fileUrl });
+    // Respond to client
+    console.log("Responding 201 to client", { contactId });
     res.status(201).json({
       success: true,
       message: "Your message has been sent successfully",
       contactId,
-      fileUrl,
     });
 
-    // Try to send emails asynchronously (fire-and-forget)
+    // Send emails asynchronously
     (async () => {
       try {
-        console.log(
-          "Starting background email tasks for contactId:",
-          contactId,
-        );
-        // Send confirmation email to user
         await sendEmail({
           to: email,
           subject: "We received your message",
-          html: `
-            <h3>Thank you, ${name}!</h3>
-            <p>We have received your message and will get back to you soon.</p>
-            <p>We'll respond as soon as possible.</p>
-          `,
-        }).catch((err) =>
-          console.warn("User confirmation email failed:", err?.message || err),
-        );
+          html: `<h3>Thank you, ${name}!</h3><p>We have received your message and will get back to you soon.</p>`,
+        }).catch((err) => console.warn("User confirmation email failed:", err?.message || err));
 
-        // Send notification email to admin (if configured)
         if (process.env.EMAIL_USER) {
           const adminHtml = `
             <h3>New Message from Portfolio</h3>
@@ -161,37 +80,13 @@ router.post("/", upload.single("cv"), async (req, res) => {
             <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
             <p><strong>Message:</strong></p>
             <p>${message}</p>
-            ${fileUrl ? `<p><strong>CV:</strong> <a href="${fileUrl}">${fileUrl}</a></p>` : ""}
           `;
 
-          // If there's an uploaded CV and we use nodemailer, attach it
-          const mailOptions = {
+          await sendEmail({
             to: process.env.EMAIL_USER,
             subject: `New Contact Form Submission from ${name}`,
             html: adminHtml,
-          };
-
-          if (
-            req.file &&
-            !(
-              process.env.AWS_S3_BUCKET &&
-              process.env.AWS_REGION &&
-              process.env.AWS_ACCESS_KEY_ID &&
-              process.env.AWS_SECRET_ACCESS_KEY
-            )
-          ) {
-            mailOptions.attachments = [
-              { filename: req.file.originalname, path: req.file.path },
-            ];
-            console.log("Attaching local file to admin email:", req.file.path);
-          }
-
-          await sendEmail(mailOptions).catch((err) =>
-            console.warn(
-              "Admin notification email failed:",
-              err?.message || err,
-            ),
-          );
+          }).catch((err) => console.warn("Admin notification email failed:", err?.message || err));
         }
       } catch (e) {
         console.warn("Background email process error:", e?.message || e);
@@ -199,8 +94,9 @@ router.post("/", upload.single("cv"), async (req, res) => {
     })();
   } catch (error) {
     console.error("Contact form error:", error);
-    res.status(500).json({ message: "Failed to submit contact form" });
+    if (!res.headersSent) res.status(500).json({ message: "Failed to submit contact form" });
   }
+});
 });
 
 // Get all contacts (admin only)

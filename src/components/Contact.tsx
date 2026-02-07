@@ -22,7 +22,6 @@ const Contact: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
 
   const validate = (): boolean => {
     const newErrors: Partial<FormData> = {};
@@ -44,12 +43,7 @@ const Contact: React.FC = () => {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const [cvFile, setCvFile] = useState<File | null>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) setCvFile(file);
-  };
+  // CV upload removed
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -77,27 +71,13 @@ const Contact: React.FC = () => {
 
       let response: Response;
 
-      if (cvFile) {
-        const form = new FormData();
-        form.append("name", formData.name);
-        form.append("email", formData.email);
-        form.append("phone", formData.phone || "");
-        form.append("message", formData.message);
-        form.append("cv", cvFile, cvFile.name);
-
-        response = await fetch(`${apiUrl}/api/contact`, {
-          method: "POST",
-          body: form,
-        });
-      } else {
-        response = await fetch(`${apiUrl}/api/contact`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        });
-      }
+      response = await fetch(`${apiUrl}/api/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -110,9 +90,6 @@ const Contact: React.FC = () => {
       console.log("Message sent:", data);
       setSuccess(true);
       setFormData({ name: "", email: "", message: "", phone: "" });
-      setCvFile(null);
-      if (data.fileUrl) setUploadedFileUrl(data.fileUrl);
-      setUploadedFileUrl(data.fileUrl || null);
     } catch (err: any) {
       console.error("Error:", err);
       setError(
@@ -239,23 +216,7 @@ const Contact: React.FC = () => {
             <p className="text-red-400 text-sm mt-1">{errors.message}</p>
           )}
 
-          {/* CV Upload */}
-          <div className="mt-2">
-            <label className="block text-sm text-gray-300 mb-2">
-              Attach CV (optional)
-            </label>
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={handleFileChange}
-              className="w-full text-sm text-gray-200"
-            />
-            {cvFile && (
-              <p className="text-sm text-gray-300 mt-2">
-                Selected: {cvFile.name}
-              </p>
-            )}
-          </div>
+          {/* CV upload removed */}
 
           <button
             type="submit"
@@ -272,18 +233,7 @@ const Contact: React.FC = () => {
               className="text-center text-sm mt-2"
             >
               <p className="text-green-400">Message sent successfully.</p>
-              {uploadedFileUrl && (
-                <p className="mt-1">
-                  <a
-                    href={uploadedFileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-yellow-400 underline"
-                  >
-                    View uploaded CV
-                  </a>
-                </p>
-              )}
+              {/* no file upload link */}
             </motion.div>
           )}
           {error && (
