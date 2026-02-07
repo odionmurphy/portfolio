@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import pkg from "@prisma/client";
+const { PrismaClient } = pkg;
 
 // Lazy and resilient Prisma client creation:
 // - Do not instantiate at import time (some Prisma engine configs require adapter/accelerate settings)
