@@ -84,7 +84,6 @@ if (process.env.DATABASE_URL) {
 
 // Serve uploaded files (CVs) if present
 import path from "path";
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // API Routes
 app.use("/api/auth", authRoutes);
@@ -109,9 +108,8 @@ if (clientPath) {
   app.use(express.static(clientPath));
 
   app.use((req, res, next) => {
-    // Skip API and uploads routes
-    if (req.path.startsWith("/api") || req.path.startsWith("/uploads"))
-      return next();
+    // Skip API routes
+    if (req.path.startsWith("/api")) return next();
     res.sendFile(path.join(clientPath, "index.html"));
   });
 }
