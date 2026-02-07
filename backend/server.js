@@ -1,4 +1,5 @@
 import express from "express";
+import fs from "fs";
 import cors from "cors";
 import dotenv from "dotenv";
 import contactRoutes from "./routes/contact.js";
@@ -89,6 +90,31 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
+
+// Serve frontend static build when present (single Render service deployment)
+// Look for `dist` in current working directory and repository root (parent)
+const possibleClientDirs = [
+  path.join(process.cwd(), "dist"),
+  path.join(process.cwd(), "..", "dist"),
+];
+let clientPath = null;
+for (const p of possibleClientDirs) {
+  if (fs.existsSync(p)) {
+    clientPath = p;
+    break;
+  }
+}
+
+if (clientPath) {
+  app.use(express.static(clientPath));
+
+  app.use((req, res, next) => {
+    // Skip API and uploads routes
+    if (req.path.startsWith("/api") || req.path.startsWith("/uploads"))
+      return next();
+    res.sendFile(path.join(clientPath, "index.html"));
+  });
+}
 
 // Health check endpoint
 app.get("/api/health", async (req, res) => {
