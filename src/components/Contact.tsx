@@ -59,7 +59,19 @@ const Contact: React.FC = () => {
     setError("");
 
     try {
-      const apiUrl = (import.meta.env.VITE_API_URL as string) ?? ""; // use relative path when not provided
+      const envApi = (import.meta.env.VITE_API_URL as string) || "";
+      let apiUrl = envApi ?? ""; // use relative path when not provided
+
+      // If running on the deployed frontend and no VITE_API_URL set, point to known backend
+      try {
+        const host =
+          typeof window !== "undefined" ? window.location.hostname : "";
+        if (!apiUrl && host.includes("portfolio-frontend-pgj0.onrender.com")) {
+          apiUrl = "https://portfolio-backend-uy9a.onrender.com";
+        }
+      } catch (e) {
+        // ignore
+      }
 
       console.log("API URL:", apiUrl);
 
