@@ -1,7 +1,8 @@
 import express from "express";
 import fs from "fs";
 import path from "path";
-import { prisma } from "../config/database.js";
+// Do not import Prisma client at module load time; obtain it lazily inside handlers
+
 import { sendEmail } from "../utils/email.js";
 import { protect } from "../middleware/auth.js";
 
@@ -22,9 +23,14 @@ router.post("/", async (req, res) => {
         "content-length:",
         req.headers["content-length"] || "unknown",
       );
-      console.log(`/api/contact preview: ${JSON.stringify(req.body).slice(0, 1000)}`);
+      console.log(
+        `/api/contact preview: ${JSON.stringify(req.body).slice(0, 1000)}`,
+      );
     } catch (e) {
-      console.warn("Could not stringify request body for debug:", e?.message || e);
+      console.warn(
+        "Could not stringify request body for debug:",
+        e?.message || e,
+      );
     }
 
     const name = req.body.name;
@@ -34,24 +40,35 @@ router.post("/", async (req, res) => {
 
     // Validation
     if (!name || !email || !message) {
-      return res.status(400).json({ message: "Please provide name, email, and message" });
+      return res
+        .status(400)
+        .json({ message: "Please provide name, email, and message" });
     }
 
     // Try to save to database if DATABASE_URL is provided
     let contactId = null;
     if (process.env.DATABASE_URL) {
       try {
-        const contact = await prisma.contact.create({
-          data: {
-            name,
-            email,
-            message,
-            phone: phone || null,
-          },
-        });
-        contactId = contact.id;
+        const dbmod = await import("../config/database.js");
+        const prisma = await dbmod.getPrisma();
+        if (prisma) {
+          const contact = await prisma.contact.create({
+            data: {
+              name,
+              email,
+              message,
+              phone: phone || null,
+            },
+          });
+          contactId = contact.id;
+        } else {
+          console.warn("Prisma client unavailable; skipping DB save");
+        }
       } catch (dbError) {
-        console.warn("Database save failed, proceeding with email only:", dbError.message);
+        console.warn(
+          "Database save failed, proceeding with email only:",
+          dbError.message || dbError,
+        );
       }
     }
 
@@ -70,7 +87,9 @@ router.post("/", async (req, res) => {
           to: email,
           subject: "We received your message",
           html: `<h3>Thank you, ${name}!</h3><p>We have received your message and will get back to you soon.</p>`,
-        }).catch((err) => console.warn("User confirmation email failed:", err?.message || err));
+        }).catch((err) =>
+          console.warn("User confirmation email failed:", err?.message || err),
+        );
 
         if (process.env.EMAIL_USER) {
           const adminHtml = `
@@ -86,7 +105,12 @@ router.post("/", async (req, res) => {
             to: process.env.EMAIL_USER,
             subject: `New Contact Form Submission from ${name}`,
             html: adminHtml,
-          }).catch((err) => console.warn("Admin notification email failed:", err?.message || err));
+          }).catch((err) =>
+            console.warn(
+              "Admin notification email failed:",
+              err?.message || err,
+            ),
+          );
         }
       } catch (e) {
         console.warn("Background email process error:", e?.message || e);
@@ -94,22 +118,23 @@ router.post("/", async (req, res) => {
     })();
   } catch (error) {
     console.error("Contact form error:", error);
-    if (!res.headersSent) res.status(500).json({ message: "Failed to submit contact form" });
+    if (!res.headersSent)
+      res.status(500).json({ message: "Failed to submit contact form" });
   }
-});
 });
 
 // Get all contacts (admin only)
 router.get("/", protect, async (req, res) => {
   try {
+    const dbmod = await import("../config/database.js");
+    const prisma = await dbmod.getPrisma();
+    if (!prisma)
+      return res.status(500).json({ message: "Database not available" });
+
     const contacts = await prisma.contact.findMany({
       orderBy: { createdAt: "desc" },
     });
-    res.status(200).json({
-      success: true,
-      count: contacts.length,
-      contacts,
-    });
+    res.status(200).json({ success: true, count: contacts.length, contacts });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -118,13 +143,15 @@ router.get("/", protect, async (req, res) => {
 // Get single contact (admin only)
 router.get("/:id", protect, async (req, res) => {
   try {
+    const dbmod = await import("../config/database.js");
+    const prisma = await dbmod.getPrisma();
+    if (!prisma)
+      return res.status(500).json({ message: "Database not available" });
+
     const contact = await prisma.contact.findUnique({
       where: { id: req.params.id },
     });
-
-    if (!contact) {
-      return res.status(404).json({ message: "Contact not found" });
-    }
+    if (!contact) return res.status(404).json({ message: "Contact not found" });
 
     // Mark as read
     await prisma.contact.update({
@@ -132,10 +159,7 @@ router.get("/:id", protect, async (req, res) => {
       data: { isRead: true },
     });
 
-    res.status(200).json({
-      success: true,
-      contact,
-    });
+    res.status(200).json({ success: true, contact });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -152,13 +176,15 @@ router.put("/:id/reply", protect, async (req, res) => {
         .json({ message: "Please provide a reply message" });
     }
 
+    const dbmod = await import("../config/database.js");
+    const prisma = await dbmod.getPrisma();
+    if (!prisma)
+      return res.status(500).json({ message: "Database not available" });
+
     let contact = await prisma.contact.findUnique({
       where: { id: req.params.id },
     });
-
-    if (!contact) {
-      return res.status(404).json({ message: "Contact not found" });
-    }
+    if (!contact) return res.status(404).json({ message: "Contact not found" });
 
     contact = await prisma.contact.update({
       where: { id: req.params.id },
@@ -189,18 +215,18 @@ router.put("/:id/reply", protect, async (req, res) => {
 // Delete contact (admin only)
 router.delete("/:id", protect, async (req, res) => {
   try {
+    const dbmod = await import("../config/database.js");
+    const prisma = await dbmod.getPrisma();
+    if (!prisma)
+      return res.status(500).json({ message: "Database not available" });
+
     const contact = await prisma.contact.delete({
       where: { id: req.params.id },
     });
-
-    if (!contact) {
-      return res.status(404).json({ message: "Contact not found" });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Contact deleted successfully",
-    });
+    if (!contact) return res.status(404).json({ message: "Contact not found" });
+    res
+      .status(200)
+      .json({ success: true, message: "Contact deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

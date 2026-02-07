@@ -5,7 +5,9 @@ import dotenv from "dotenv";
 import contactRoutes from "./routes/contact.js";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
-import { connectDB, prisma } from "./config/database.js";
+// Lazy-load database to avoid startup crashes if Prisma client is missing
+let prisma = null;
+import { connectDB as _connectDB } from "./config/database.js";
 
 dotenv.config();
 
@@ -77,7 +79,18 @@ app.use((err, req, res, next) => {
 // Connect to SQL database (Postgres via Prisma)
 if (process.env.DATABASE_URL) {
   // Attempt to connect but don't exit on failure
-  connectDB();
+  (async () => {
+    try {
+      const p = await _connectDB();
+      prisma = p;
+    } catch (e) {
+      console.warn(
+        "Prisma connect failed at startup:",
+        e && e.message ? e.message : e,
+      );
+      prisma = null;
+    }
+  })();
 } else {
   console.log("DATABASE_URL not provided, running without database");
 }
@@ -120,7 +133,13 @@ app.get("/api/health", async (req, res) => {
   if (process.env.DATABASE_URL) {
     try {
       // Lightweight query to verify DB connectivity
-      await prisma.$queryRaw`SELECT 1`;
+      if (!prisma) {
+        // try to obtain prisma lazily
+        const dbmod = await import("./config/database.js");
+        prisma = await dbmod.getPrisma();
+        if (prisma) await prisma.$connect();
+      }
+      if (prisma) await prisma.$queryRaw`SELECT 1`;
       dbStatus = "connected";
     } catch (e) {
       dbStatus = "disconnected";
