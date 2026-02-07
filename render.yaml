@@ -1,19 +1,9 @@
 services:
   - type: web
-    name: portfolio-frontend
-    env: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-
-  - type: web
-    name: portfolio-backend
+    name: portfolio
     env: node
     plan: free
-    buildCommand: cd backend && npm install
+    buildCommand: npm install && npm run build && cd backend && npm install --production
     startCommand: cd backend && npm start
     envVars:
       - key: DATABASE_URL
@@ -31,7 +21,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000
+        value: $PORT
       - key: FRONTEND_URL
         sync: false
       - key: ADMIN_URL

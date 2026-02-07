@@ -59,8 +59,7 @@ const Contact: React.FC = () => {
     setError("");
 
     try {
-      const apiUrl =
-        (import.meta.env.VITE_API_URL as string) || "http://localhost:5000"; // default to backend API
+      const apiUrl = (import.meta.env.VITE_API_URL as string) ?? ""; // use relative path when not provided
 
       console.log("API URL:", apiUrl);
 
