@@ -26,16 +26,27 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5M
 // Submit contact form (public) - supports JSON or multipart/form-data with 'cv' file
 router.post("/", upload.single("cv"), async (req, res) => {
   try {
-    // Log a small preview for debugging
+    // Verbose request logging for Render diagnostics
     try {
+      console.log(`Incoming /api/contact - ${new Date().toISOString()}`);
+      console.log("method:", req.method, "url:", req.originalUrl);
+      console.log("headers:", JSON.stringify(req.headers, null, 2));
+      console.log("content-type:", req.headers["content-type"] || "(none)");
+      console.log(
+        "content-length:",
+        req.headers["content-length"] || "unknown",
+      );
       const preview = req.file
         ? `[file:${req.file.originalname}] ${JSON.stringify(req.body).slice(0, 500)}`
         : JSON.stringify(req.body).slice(0, 1000);
-      console.log(
-        `${new Date().toISOString()} - /api/contact preview: ${preview}`,
-      );
+      console.log(`/api/contact preview: ${preview}`);
+      if (req.file)
+        console.log("uploaded file:", req.file.path, req.file.mimetype);
     } catch (e) {
-      console.warn("Could not stringify request body for debug:", e.message);
+      console.warn(
+        "Could not stringify request body for debug:",
+        e?.message || e,
+      );
     }
 
     const name = req.body.name || req.body.get?.("name");
@@ -113,6 +124,7 @@ router.post("/", upload.single("cv"), async (req, res) => {
     }
 
     // Respond to client immediately
+    console.log("Responding 201 to client", { contactId, fileUrl });
     res.status(201).json({
       success: true,
       message: "Your message has been sent successfully",
@@ -123,6 +135,10 @@ router.post("/", upload.single("cv"), async (req, res) => {
     // Try to send emails asynchronously (fire-and-forget)
     (async () => {
       try {
+        console.log(
+          "Starting background email tasks for contactId:",
+          contactId,
+        );
         // Send confirmation email to user
         await sendEmail({
           to: email,
@@ -133,7 +149,7 @@ router.post("/", upload.single("cv"), async (req, res) => {
             <p>We'll respond as soon as possible.</p>
           `,
         }).catch((err) =>
-          console.warn("User confirmation email failed:", err.message),
+          console.warn("User confirmation email failed:", err?.message || err),
         );
 
         // Send notification email to admin (if configured)
@@ -155,8 +171,6 @@ router.post("/", upload.single("cv"), async (req, res) => {
             html: adminHtml,
           };
 
-          // If the file was stored locally, attach it to the admin email.
-          // When S3 is configured we won't attach the binary (we include the public S3 link above).
           if (
             req.file &&
             !(
@@ -169,14 +183,18 @@ router.post("/", upload.single("cv"), async (req, res) => {
             mailOptions.attachments = [
               { filename: req.file.originalname, path: req.file.path },
             ];
+            console.log("Attaching local file to admin email:", req.file.path);
           }
 
           await sendEmail(mailOptions).catch((err) =>
-            console.warn("Admin notification email failed:", err.message),
+            console.warn(
+              "Admin notification email failed:",
+              err?.message || err,
+            ),
           );
         }
       } catch (e) {
-        console.warn("Background email process error:", e.message || e);
+        console.warn("Background email process error:", e?.message || e);
       }
     })();
   } catch (error) {
