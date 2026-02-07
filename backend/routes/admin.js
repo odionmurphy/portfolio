@@ -1,7 +1,7 @@
 import express from "express";
 import User from "../models/User.js";
 import { protect } from "../middleware/auth.js";
-import { prisma } from "../config/database.js";
+// Do not import Prisma client at module load time; obtain it lazily inside handlers
 
 const router = express.Router();
 
@@ -22,23 +22,37 @@ router.get("/messages", protect, checkAdmin, async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const messages = await prisma.contact.findMany({
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
-    });
+    try {
+      const dbmod = await import("../config/database.js");
+      const prisma = await dbmod.getPrisma();
+      if (!prisma)
+        return res.status(500).json({ message: "Database not available" });
 
-    const total = await prisma.contact.count();
+      const messages = await prisma.contact.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      });
 
-    res.json({
-      messages,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    });
+      const total = await prisma.contact.count();
+
+      res.json({
+        messages,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit),
+        },
+      });
+      return;
+    } catch (err) {
+      console.warn(
+        "Admin messages DB error:",
+        err && err.message ? err.message : err,
+      );
+      return res.status(500).json({ message: "Database error" });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -47,12 +61,15 @@ router.get("/messages", protect, checkAdmin, async (req, res) => {
 // Get single message
 router.get("/messages/:id", protect, checkAdmin, async (req, res) => {
   try {
+    const dbmod = await import("../config/database.js");
+    const prisma = await dbmod.getPrisma();
+    if (!prisma)
+      return res.status(500).json({ message: "Database not available" });
+
     const message = await prisma.contact.findUnique({
       where: { id: req.params.id },
     });
-    if (!message) {
-      return res.status(404).json({ message: "Message not found" });
-    }
+    if (!message) return res.status(404).json({ message: "Message not found" });
     res.json(message);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -62,6 +79,11 @@ router.get("/messages/:id", protect, checkAdmin, async (req, res) => {
 // Mark message as read
 router.patch("/messages/:id/read", protect, checkAdmin, async (req, res) => {
   try {
+    const dbmod = await import("../config/database.js");
+    const prisma = await dbmod.getPrisma();
+    if (!prisma)
+      return res.status(500).json({ message: "Database not available" });
+
     const message = await prisma.contact.update({
       where: { id: req.params.id },
       data: { isRead: true },
@@ -81,14 +103,15 @@ router.post("/messages/:id/reply", protect, checkAdmin, async (req, res) => {
       return res.status(400).json({ message: "Reply message required" });
     }
 
+    const dbmod = await import("../config/database.js");
+    const prisma = await dbmod.getPrisma();
+    if (!prisma)
+      return res.status(500).json({ message: "Database not available" });
+
     const message = await prisma.contact.update({
       where: { id: req.params.id },
-      data: {
-        isReplied: true,
-        replyMessage: reply,
-      },
+      data: { isReplied: true, replyMessage: reply },
     });
-
     res.json(message);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -98,6 +121,11 @@ router.post("/messages/:id/reply", protect, checkAdmin, async (req, res) => {
 // Delete message
 router.delete("/messages/:id", protect, checkAdmin, async (req, res) => {
   try {
+    const dbmod = await import("../config/database.js");
+    const prisma = await dbmod.getPrisma();
+    if (!prisma)
+      return res.status(500).json({ message: "Database not available" });
+
     await prisma.contact.delete({ where: { id: req.params.id } });
     res.json({ message: "Message deleted successfully" });
   } catch (error) {
@@ -167,6 +195,11 @@ router.delete("/users/:id", protect, checkAdmin, async (req, res) => {
 // Get dashboard statistics
 router.get("/stats", protect, checkAdmin, async (req, res) => {
   try {
+    const dbmod = await import("../config/database.js");
+    const prisma = await dbmod.getPrisma();
+    if (!prisma)
+      return res.status(500).json({ message: "Database not available" });
+
     const totalMessages = await prisma.contact.count();
     const unreadMessages = await prisma.contact.count({
       where: { isRead: false },
@@ -176,12 +209,7 @@ router.get("/stats", protect, checkAdmin, async (req, res) => {
     });
     const totalUsers = await User.countDocuments();
 
-    res.json({
-      totalMessages,
-      unreadMessages,
-      repliedMessages,
-      totalUsers,
-    });
+    res.json({ totalMessages, unreadMessages, repliedMessages, totalUsers });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
