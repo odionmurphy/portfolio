@@ -1,0 +1,10 @@
+Starter React + Vite Template
+
+This is a minimal starter template provided as a demo product.
+
+Contents:
+- package.json
+- src/
+- README.md
+
+Thank you for your purchase!

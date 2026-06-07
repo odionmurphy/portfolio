@@ -1,0 +1,9 @@
+Tailwind Landing Kit
+
+This kit contains a set of reusable landing sections built with Tailwind CSS.
+
+Files:
+- sections.md
+- components/
+
+Thank you for your purchase!

@@ -6,17 +6,16 @@ import {
   useLocation,
 } from "react-router-dom";
 import Navigation from "./components/Navigation";
-import Hero from "./components/Hero";
-import About from "./components/About";
-import Skills from "./components/Skills";
-import Portfolio from "./components/Portfolio";
 import ContactPage from "./pages/ContactPage";
+import SignIn from "./pages/SignIn";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import Shop from "./pages/Shop";
+import Home from "./pages/Home";
+import Checkout from "./pages/Checkout";
 import SocialLinks from "./components/SocialLinks";
 import Footer from "./components/Footer";
-import TorchLight from "./components/TorchLight";
-import CursorSmoke from "./components/CursorSmoke";
+import { CartProvider } from "./context/CartContext";
 
 function AppContent() {
   const location = useLocation();
@@ -38,32 +37,21 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+      <Navigation />
       <Routes>
         <Route
           path="/"
           element={
             <>
-              <Navigation />
-              <Hero />
-              <About />
-              <Skills />
-              <Portfolio />
+              <Home />
               <SocialLinks />
               <Footer />
-              <TorchLight />
-              <CursorSmoke />
             </>
           }
         />
-        <Route
-          path="/contact"
-          element={
-            <>
-              <Navigation />
-              <ContactPage />
-            </>
-          }
-        />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/checkout" element={<Checkout />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
@@ -73,9 +61,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <CartProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </CartProvider>
   );
 }
 
