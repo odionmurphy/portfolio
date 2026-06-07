@@ -6,7 +6,6 @@ import {
   useLocation,
 } from "react-router-dom";
 import Navigation from "./components/Navigation";
-// ContactPage removed — site uses SignIn instead
 import SignIn from "./pages/SignIn";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
