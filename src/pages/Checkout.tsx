@@ -13,7 +13,7 @@ const Checkout: React.FC = () => {
   if (completed) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-        <main className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <main className="container mx-auto px-4 py-20 text-center">
           <h2 className="text-3xl font-bold mb-4">Purchase complete</h2>
           <p className="text-gray-300 mb-6">
             Thanks — here are your download links:
@@ -49,7 +49,7 @@ const Checkout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-      <main className="max-w-4xl mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-12">
         <h2 className="text-3xl font-bold mb-6">Checkout</h2>
 
         {items.length === 0 ? (

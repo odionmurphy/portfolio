@@ -33,7 +33,7 @@ const Shop: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-      <main className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <main className="container mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar */}
         <aside className="hidden lg:block">
           <div className="bg-gray-900 p-4 rounded-lg sticky top-20">

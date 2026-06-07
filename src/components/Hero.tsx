@@ -5,7 +5,7 @@ const Hero: React.FC = () => {
   return (
     <section
       id="home"
-      className="relative max-w-6xl mx-auto px-4 py-28 text-center overflow-hidden"
+      className="relative container mx-auto px-4 py-28 text-center overflow-hidden"
     >
       {/* Background Glow */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-yellow-500/10 via-transparent to-transparent" />

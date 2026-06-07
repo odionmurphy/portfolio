@@ -11,7 +11,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-      <main className="max-w-6xl mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-16">
         <section className="flex flex-col lg:flex-row items-start gap-8">
           <div className="flex-1">
             <h1 className="text-4xl lg:text-5xl font-extrabold mb-4">

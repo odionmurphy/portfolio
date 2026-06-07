@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState } from "react";
 import ProjectCard, { Project } from "./ProjectCard";
 import ProjectModal from "./ProjectModal";
@@ -12,7 +8,7 @@ const Portfolio: React.FC = () => {
 
   return (
     <section id="portfolio" className="bg-gray-800 py-24">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="container mx-auto px-4">
         <h2 className="text-4xl font-bold mb-12 text-center">
           Past & Upcoming-Projects
         </h2>
@@ -39,5 +35,3 @@ const Portfolio: React.FC = () => {
 };
 
 export default Portfolio;
-
-

@@ -19,7 +19,7 @@ const Navigation: React.FC = () => {
       transition={{ duration: 0.6 }}
       className={`sticky top-0 z-50 backdrop-blur-lg bg-gray-900`}
     >
-      <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link
           to="/"
           className="flex items-center gap-2 cursor-pointer select-none"
