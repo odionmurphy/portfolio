@@ -64,7 +64,9 @@ const Shop: React.FC = () => {
               <input
                 type="search"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setQuery(e.target.value)
+                }
                 placeholder="Search products"
                 className="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-sm"
                 aria-label="Search products"
@@ -81,7 +83,9 @@ const Shop: React.FC = () => {
               <input
                 type="search"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setQuery(e.target.value)
+                }
                 placeholder="Search"
                 className="bg-gray-800 border border-gray-700 px-3 py-2 rounded text-sm"
                 aria-label="Search products"

@@ -27,7 +27,9 @@ const SignIn: React.FC = () => {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
               className="w-full mt-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded"
               required
             />
@@ -38,7 +40,9 @@ const SignIn: React.FC = () => {
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setPassword(e.target.value)
+              }
               className="w-full mt-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded"
               required
             />

@@ -98,7 +98,8 @@ const Skills: React.FC = () => {
               </h3>
               <ul className="space-y-2">
                 {category.skills.map((skill) => {
-                  const Icon = iconMap[skill] || CheckCircle;
+                  const Icon = (iconMap[skill] ||
+                    CheckCircle) as React.ComponentType<any>;
                   return (
                     <li key={skill} className="text-gray-300 flex items-center">
                       <Icon className="w-5 h-5 text-yellow-400 mr-3" />
@@ -128,7 +129,8 @@ const Skills: React.FC = () => {
               style={{ whiteSpace: "nowrap", padding: "10px 12px" }}
             >
               {[...allSkills, ...allSkills].map((skill, i) => {
-                const Icon = iconMap[skill] || CheckCircle;
+                const Icon = (iconMap[skill] ||
+                  CheckCircle) as React.ComponentType<any>;
                 return (
                   <div
                     key={`${skill}-${i}`}
