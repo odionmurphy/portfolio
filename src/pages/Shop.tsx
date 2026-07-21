@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import { products, Product } from "../data/products";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import ProductModal from "../components/ProductModal";
 
 const uniqueCategories = (items: Product[]) => {
@@ -11,9 +11,19 @@ const uniqueCategories = (items: Product[]) => {
 };
 
 const Shop: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCategory = searchParams.get("category");
   const [query, setQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const setSelectedCategory = (category: string | null) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (category) next.set("category", category);
+      else next.delete("category");
+      return next;
+    });
+  };
 
   const categories = useMemo(() => uniqueCategories(products), []);
 

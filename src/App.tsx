@@ -13,7 +13,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Shop from "./pages/Shop";
 import Home from "./pages/Home";
 import Checkout from "./pages/Checkout";
-import SocialLinks from "./components/SocialLinks";
 import Footer from "./components/Footer";
 import { CartProvider } from "./context/CartContext";
 
@@ -39,16 +38,7 @@ function AppContent() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
       <Navigation />
       <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <Home />
-              <SocialLinks />
-              <Footer />
-            </>
-          }
-        />
+        <Route path="/" element={<Home />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/shop" element={<Shop />} />
@@ -56,6 +46,7 @@ function AppContent() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
+      <Footer />
     </div>
   );
 }
