@@ -130,7 +130,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <div className="bg-slate-800 border-b border-slate-700 p-6">
-      <div className="container mx-auto flex justify-between items-center">
+        <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
           <button
             onClick={handleLogout}
