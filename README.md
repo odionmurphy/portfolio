@@ -1,401 +1,147 @@
-# Portfolio Application
+# Digital Shop
 
-A full-stack portfolio application with contact form, user authentication, and admin dashboard to manage inquiries.
+A small storefront for selling digital products (templates, guides, scripts, snippet packs). The app started life as a developer portfolio — the Home page still carries portfolio sections (Hero, About, Skills, Contact) — and was converted into a shop by adding a product catalog, cart, and checkout flow on top of it.
 
-## Features
+This README describes what the code actually does today, including the parts that are still mocked/UI-only, so it doesn't drift from reality like the previous version of this doc did.
 
-✨ **Frontend**
+## Tech Stack
 
-- Responsive portfolio showcase
-- Contact form with validation
-- Smooth animations with Framer Motion
-- Built with React, TypeScript, and Tailwind CSS
-- Vite for fast development
+**Frontend** — `src/`
 
-✨ **Backend**
+- React 18 + TypeScript, built with Vite
+- Tailwind CSS for styling, Framer Motion for animation
+- React Router (`react-router-dom`) for routing
+- Cart state via a simple React Context (`src/context/CartContext.tsx`) — in-memory only, not persisted
 
-- Express.js REST API
-- MongoDB database integration
-- User authentication with JWT
-- Contact message management
-- Email notifications (Resend or Nodemailer)
-- Admin endpoints for managing contacts
+**Backend** — `backend/`
+
+- Express server (`backend/server.js`)
+- Prisma ORM against a local **SQLite** database (`backend/prisma/dev.db`)
+- No auth, no JWT, no email provider — the backend's only job right now is storing contact messages
 
 ## Project Structure
 
 ```
 .
-├── src/                    # Frontend (React)
-│   ├── components/        # Reusable components
-│   ├── pages/            # Page components
-│   ├── data/             # Static data
-│   └── main.tsx          # Entry point
-├── backend/              # Backend (Node.js/Express)
-│   ├── config/          # Database configuration
-│   ├── models/          # MongoDB models
-│   ├── routes/          # API routes
-│   ├── middleware/      # Authentication & utilities
-│   └── server.js        # Express server
-├── docker-compose.yml    # Docker services configuration
-└── package.json         # Frontend dependencies
+├── src/
+│   ├── components/        # Navigation, Hero, About, Skills, Contact, ProductCard, ProductModal, ...
+│   ├── pages/              # Home, Shop, Checkout, SignIn, AdminLogin, AdminDashboard
+│   ├── context/
+│   │   └── CartContext.tsx # add/remove/clear cart items, compute total
+│   ├── data/
+│   │   └── products.ts     # static product catalog (id, slug, title, price, fileUrl, category)
+│   └── main.tsx
+├── backend/
+│   ├── prisma/schema.prisma # single `Message` model
+│   ├── server.js             # Express app: /api/health, /api/messages
+│   └── README.md
+└── public/products/          # placeholder product images + downloadable files
 ```
 
-## Prerequisites
+## Routes
 
-- **Node.js** (v18 or higher)
-- **npm** or **yarn**
-- **MongoDB** (local or Atlas cloud database)
-- **Docker & Docker Compose** (optional, for containerized deployment)
+| Route              | Page             | What it actually does                                                                 |
+| ------------------ | ---------------- | --------------------------------------------------------------------------------------- |
+| `/`                 | Home             | Portfolio-style Hero/About/Skills sections + the Contact form                          |
+| `/shop`             | Shop             | Browse/search/filter the static product catalog, add items to cart                     |
+| `/checkout`         | Checkout         | Review cart, "Complete Purchase (Mock)" — **no real payment**, immediately reveals static download links from `public/products/` |
+| `/signin`           | SignIn           | **Mock auth** — stores an email in `localStorage`, no backend call, no real accounts    |
+| `/admin/login`      | AdminLogin       | UI calls `POST /api/auth/login` — **this endpoint does not exist in the current backend** |
+| `/admin/dashboard`  | AdminDashboard   | UI calls `GET /api/admin/stats`, `GET /api/admin/messages`, etc. — **these endpoints do not exist in the current backend** |
 
-## Installation & Setup
+## Backend Reality Check
 
-### 1. Clone the Repository
+The current backend (`backend/server.js`) only exposes:
 
-```bash
-git clone https://github.com/yourusername/portfolio.git
-cd portfolio
+- `GET /api/health` — health check
+- `POST /api/messages` — create a message `{ name, email, message }`
+- `GET /api/messages` — list messages, newest first
+
+Backed by one Prisma model:
+
+```prisma
+model Message {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
 ```
 
-### 2. Install Frontend Dependencies
+**Known mismatch:** the Contact form (`src/components/Contact.tsx`) posts to `POST /api/contact`, but the backend only implements `POST /api/messages`. Submitting the contact form against this backend will fail (404) until either the frontend is pointed at `/api/messages` or a matching `/api/contact` route is added.
 
-```bash
-npm install
-# or
-yarn install
-```
-
-### 3. Install Backend Dependencies
-
-```bash
-cd backend
-npm install
-cd ..
-```
-
-### 4. Configure Environment Variables
-
-**Frontend (.env)**
-
-```env
-VITE_API_URL=http://localhost:5000
-```
-
-**Backend (backend/.env)**
-
-```env
-# MongoDB Configuration
-MONGODB_URI=mongodb://localhost:27017/portfolio
-# For MongoDB Atlas: mongodb+srv://username:password@cluster.mongodb.net/portfolio
-
-# Email Configuration (Resend)
-RESEND_API_KEY=your-resend-api-key
-
-# Email Configuration (Nodemailer - Gmail)
-EMAIL_SERVICE=gmail
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
-EMAIL_FROM=your-email@gmail.com
-
-# Application
-PORT=5000
-NODE_ENV=development
-JWT_SECRET=your-jwt-secret-key-change-this
-
-# Frontend URL
-FRONTEND_URL=http://localhost:5173
-
-# Admin Dashboard URL
-ADMIN_URL=http://localhost:5173/admin
-```
+The admin login/dashboard pages, JWT auth, MongoDB, email sending (Resend/Nodemailer), and user accounts described in older docs (`BACKEND_SETUP.md`, `DEPLOYMENT.md`, `MONGODB_SETUP.md`, etc.) are **not implemented** by the current backend — those pages are UI shells left over from an earlier iteration of the project.
 
 ## Running Locally
 
-### Option 1: Without Docker
-
-**Terminal 1 - Start MongoDB** (if local)
+### 1. Install frontend dependencies
 
 ```bash
-mongod
+npm install
 ```
 
-**Terminal 2 - Start Backend**
+### 2. Install backend dependencies & set up the database
 
 ```bash
 cd backend
 npm install
-npm start
+npx prisma db push      # creates dev.db from schema.prisma
+npx prisma generate
+cd ..
 ```
 
-**Terminal 3 - Start Frontend**
+### 3. Environment variables
+
+**Frontend** (`.env`)
+
+```env
+VITE_API_URL=http://localhost:4000
+```
+
+**Backend** (`backend/.env`)
+
+```env
+DATABASE_URL="file:./dev.db"
+PORT=4000
+```
+
+> Note: `server.js` defaults to port `4000` if `PORT` isn't set — make sure `VITE_API_URL` matches whatever port the backend actually starts on.
+
+### 4. Start both apps
 
 ```bash
-npm install
-npm run dev
-```
-
-Visit `http://localhost:5173` to view the application.
-
-### Option 2: With Docker
-
-```bash
-docker-compose up --build
-```
-
-This will start:
-
-- MongoDB on `localhost:27017`
-- Backend on `localhost:5000`
-
-Then in another terminal, start the frontend:
-
-```bash
-npm run dev
-```
-
-## API Endpoints
-
-### Authentication
-
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user (requires token)
-
-### Contact Messages
-
-- `POST /api/contact` - Submit contact form (public)
-- `GET /api/contact` - Get all messages (admin only)
-- `GET /api/contact/:id` - Get single message (admin only)
-- `PUT /api/contact/:id/reply` - Reply to message (admin only)
-- `DELETE /api/contact/:id` - Delete message (admin only)
-
-### Health Check
-
-- `GET /api/health` - Check API health status
-
-## Database Setup
-
-### MongoDB Atlas (Cloud)
-
-1. Create account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Create a free cluster
-3. Get connection string
-4. Update `MONGODB_URI` in `backend/.env`
-
-### Local MongoDB
-
-```bash
-# Install MongoDB
-brew install mongodb-community  # macOS
-# or
-sudo apt-get install mongodb    # Linux
-
-# Start MongoDB
-brew services start mongodb-community  # macOS
-# or
-sudo systemctl start mongod     # Linux
-
-# Verify connection
-mongosh
-```
-
-## Email Setup
-
-### Option 1: Resend (Recommended)
-
-1. Sign up at [Resend](https://resend.com)
-2. Get API key from dashboard
-3. Set `RESEND_API_KEY` in `backend/.env`
-
-### Option 2: Gmail (SMTP)
-
-1. Enable 2-Factor Authentication on Google Account
-2. Generate [App Password](https://myaccount.google.com/apppasswords)
-3. Set `EMAIL_USER` and `EMAIL_PASSWORD` in `backend/.env`
-
-## Deployment
-
-### Deploy to GitHub
-
-```bash
-# Initialize git (if not already done)
-git init
-
-# Add all files
-git add .
-
-# Commit
-git commit -m "Initial commit: Full-stack portfolio"
-
-# Create repository on GitHub, then:
-git remote add origin https://github.com/yourusername/portfolio.git
-git branch -M main
-git push -u origin main
-```
-
-### Deploy Backend to Render
-
-1. Push code to GitHub
-2. Go to [Render.com](https://render.com)
-3. Create new Web Service
-4. Connect GitHub repository
-5. Set environment variables from `backend/.env`
-6. Deploy
-
-**Backend Environment Variables on Render:**
-
-```
-MONGODB_URI=your-mongodb-atlas-uri
-RESEND_API_KEY=your-key
-EMAIL_USER=your-email
-EMAIL_PASSWORD=your-password
-JWT_SECRET=your-secret
-FRONTEND_URL=your-frontend-url
-PORT=10000
-NODE_ENV=production
-```
-
-### Deploy Frontend to Vercel
-
-1. Push code to GitHub
-2. Go to [Vercel.com](https://vercel.com)
-3. Import GitHub repository
-4. Configure:
-   - **Framework**: Vite
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-5. Set environment variables:
-   ```
-   VITE_API_URL=https://your-render-backend.onrender.com
-   ```
-6. Deploy
-
-### Alternative: Deploy with Docker to Heroku
-
-```bash
-# Install Heroku CLI
-brew tap heroku/brew && brew install heroku
-
-# Login to Heroku
-heroku login
-
-# Create Heroku app
-heroku create your-app-name
-
-# Set environment variables
-heroku config:set MONGODB_URI=your-url
-heroku config:set JWT_SECRET=your-secret
-# ... set other variables
-
-# Deploy
-git push heroku main
-```
-
-## Development
-
-### Frontend Development
-
-```bash
-npm run dev
-```
-
-Vite will start at `http://localhost:5173` with hot module reloading.
-
-### Backend Development
-
-```bash
+# Terminal 1
 cd backend
+npm start        # or: npm run dev (nodemon)
+
+# Terminal 2
 npm run dev
 ```
 
-This starts the server with auto-reload using `--watch` flag.
+Visit `http://localhost:5173`.
 
-### Build Frontend
-
-```bash
-npm run build
-```
-
-Generates optimized build in `dist/` directory.
-
-## Testing
-
-### Contact Form
-
-1. Navigate to contact section
-2. Fill form with test data
-3. Submit
-4. Check email for confirmation
-
-### Admin Features
-
-1. Login with admin account
-2. View all contact messages
-3. Mark as read/reply to messages
-4. Check reply emails
-
-## Troubleshooting
-
-### Backend won't connect to MongoDB
-
-- Verify MongoDB is running: `mongosh`
-- Check `MONGODB_URI` in `.env`
-- Ensure network access is enabled (if using Atlas)
-
-### Email not sending
-
-- Verify `RESEND_API_KEY` or Gmail credentials
-- Check spam/trash folders
-- Test with `curl`:
-  ```bash
-  curl -X POST http://localhost:5000/api/contact \
-    -H "Content-Type: application/json" \
-    -d '{"name":"Test","email":"test@example.com","message":"Test"}'
-  ```
-
-### CORS errors
-
-- Verify `FRONTEND_URL` matches frontend URL in backend `.env`
-- Check CORS configuration in `backend/server.js`
-
-### Port already in use
+## Build
 
 ```bash
-# Find and kill process on port 5000
-lsof -ti:5000 | xargs kill -9
-
-# Or use different port
-export PORT=5001
+npm run build     # installs dev deps, runs tsc, then vite build -> dist/
+npm run preview   # serve the production build locally
 ```
 
-## Best Practices
+## Product Catalog
 
-1. **Never commit sensitive data** - Use `.env` files and `.gitignore`
-2. **Keep JWT_SECRET secure** - Use strong, random string in production
-3. **Validate all inputs** - Backend validates contact form data
-4. **Use HTTPS in production** - Always enable SSL/TLS
-5. **Rate limiting** - Consider adding rate limiting for public endpoints
-6. **Database backups** - Regular backups for MongoDB
+Products are hardcoded in [`src/data/products.ts`](src/data/products.ts) — there's no products table or admin UI to manage them. Adding/editing a product means editing that file directly and dropping the matching image/download file into `public/products/`.
 
-## Contributing
+## Known Gaps
 
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open Pull Request
+These are real limitations of the app as it stands, not bugs to "fix" blindly — worth knowing before building on top of them:
+
+- **No real payments.** Checkout is a mocked timeout that immediately unlocks download links.
+- **No real user accounts.** SignIn only writes to `localStorage`.
+- **Admin dashboard is disconnected.** It expects auth/admin API routes that don't exist yet.
+- **Cart doesn't persist.** Refreshing the page clears it (in-memory Context state only).
+- **Contact form endpoint mismatch.** See "Backend Reality Check" above.
 
 ## License
 
-This project is open source and available under the MIT License.
-
-## Support
-
-For issues and questions:
-
-- Create an issue on GitHub
-- Check existing documentation
-- Review API endpoints documentation
-
----
-
-**Built with ❤️ using React, Node.js, and MongoDB**
+MIT
