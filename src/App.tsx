@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import Navigation from "./components/Navigation";
 import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Shop from "./pages/Shop";
@@ -49,6 +50,7 @@ function AppContent() {
           }
         />
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/admin/login" element={<AdminLogin />} />

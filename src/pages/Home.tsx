@@ -2,8 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { products } from "../data/products";
 import ProductCard from "../components/ProductCard";
+import { getUser } from "../lib/auth";
 
 const Home: React.FC = () => {
+  const user = getUser();
   const featured = products.slice(0, 4);
   const trending = featured.concat(
     products.slice(4, Math.min(products.length, 8)),
@@ -39,15 +41,31 @@ const Home: React.FC = () => {
 
           <div className="w-full lg:w-1/3 bg-gray-900 p-6 rounded-lg">
             <h4 className="font-bold mb-3">Account</h4>
-            <p className="text-sm text-gray-400 mb-4">
-              Sign in to access purchases and downloads.
-            </p>
-            <Link
-              to="/signin"
-              className="bg-yellow-500 px-4 py-2 rounded inline-block"
-            >
-              Sign in
-            </Link>
+            {user ? (
+              <>
+                <p className="text-sm text-gray-400 mb-4">
+                  Signed in as {user.name || user.email}.
+                </p>
+                <Link
+                  to="/shop"
+                  className="bg-yellow-500 px-4 py-2 rounded inline-block"
+                >
+                  Browse Shop
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-gray-400 mb-4">
+                  Sign in to access purchases and downloads.
+                </p>
+                <Link
+                  to="/signin"
+                  className="bg-yellow-500 px-4 py-2 rounded inline-block"
+                >
+                  Sign in
+                </Link>
+              </>
+            )}
           </div>
         </section>
 

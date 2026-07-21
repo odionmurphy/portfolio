@@ -1,16 +1,24 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Code } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { clearSession, getUser } from "../lib/auth";
 
 const Navigation: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const user = getUser();
 
   const navLinks = [
     { name: "Home", to: "/", id: "home" },
     { name: "Shop", to: "/shop", id: "shop" },
-    { name: "Sign In", to: "/signin", id: "signin" },
+    ...(user ? [] : [{ name: "Sign In", to: "/signin", id: "signin" }]),
   ];
+
+  const handleSignOut = () => {
+    clearSession();
+    navigate("/");
+  };
 
   return (
     <motion.nav
@@ -54,6 +62,20 @@ const Navigation: React.FC = () => {
               </Link>
             );
           })}
+
+          {user && (
+            <div className="flex items-center gap-4">
+              <span className="text-gray-300 text-sm">
+                {user.name || user.email}
+              </span>
+              <button
+                onClick={handleSignOut}
+                className="font-semibold text-gray-300 hover:text-yellow-400 transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </motion.nav>

@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { getApiUrl, saveSession } from "../lib/auth";
 
-const SignIn: React.FC = () => {
+const SignUp: React.FC = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -13,21 +14,30 @@ const SignIn: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
 
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const response = await fetch(`${getApiUrl()}/api/auth/login`, {
+      const response = await fetch(`${getApiUrl()}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Sign in failed");
+        throw new Error(data.error || "Sign up failed");
       }
 
-      saveSession(data.token, data.user, remember);
+      saveSession(data.token, data.user, true);
       navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -40,13 +50,25 @@ const SignIn: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-gray-900/60 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 shadow-xl">
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-extrabold">Welcome back</h1>
+          <h1 className="text-3xl font-extrabold">Create an account</h1>
           <p className="text-sm text-gray-400 mt-2">
-            Sign in to access your purchases
+            Sign up to start buying digital products
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm text-gray-300">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setName(e.target.value)
+              }
+              className="w-full mt-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            />
+          </div>
+
           <div>
             <label className="text-sm text-gray-300">Email</label>
             <input
@@ -70,19 +92,22 @@ const SignIn: React.FC = () => {
               }
               className="w-full mt-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
               required
+              minLength={8}
             />
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={() => setRemember((v) => !v)}
-                className="w-4 h-4"
-              />
-              <span className="text-gray-300">Remember me</span>
-            </label>
+          <div>
+            <label className="text-sm text-gray-300">Confirm password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setConfirmPassword(e.target.value)
+              }
+              className="w-full mt-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              required
+              minLength={8}
+            />
           </div>
 
           {error && <div className="text-red-400 text-sm">{error}</div>}
@@ -92,14 +117,14 @@ const SignIn: React.FC = () => {
             disabled={isLoading}
             className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-400/50 text-black font-semibold py-2 rounded"
           >
-            {isLoading ? "Signing in..." : "Sign in"}
+            {isLoading ? "Creating account..." : "Sign up"}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-400">
-          Don&rsquo;t have an account?{" "}
-          <Link to="/signup" className="text-yellow-400 hover:underline">
-            Create one
+          Already have an account?{" "}
+          <Link to="/signin" className="text-yellow-400 hover:underline">
+            Sign in
           </Link>
         </div>
       </div>
@@ -107,4 +132,4 @@ const SignIn: React.FC = () => {
   );
 };
 
-export default SignIn;
+export default SignUp;
