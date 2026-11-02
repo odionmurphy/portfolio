@@ -15,6 +15,7 @@ import Home from "./pages/Home";
 import Checkout from "./pages/Checkout";
 import Footer from "./components/Footer";
 import { CartProvider } from "./context/CartContext";
+import PraxislineChatWidget from "./components/PraxislineChatWidget";
 
 function AppContent() {
   const location = useLocation();

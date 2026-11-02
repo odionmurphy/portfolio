@@ -9,7 +9,8 @@ export default function PraxislineChatWidget() {
 
     const script = document.createElement("script");
     script.src =
-      "https://voiceflow-ai-web-odionusunobuns-projects.vercel.app/praxisline-widget.js";
+      
+  "https://voiceflow-ai-web.vercel.app/praxisline-widget.js";
     script.dataset.businessId = "275434f1-6e3a-4d1f-8bef-582db10fd491";
     script.dataset.praxislineWidget = "true";
     script.defer = true;
