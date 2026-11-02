@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Code, Github, Linkedin, Mail } from "lucide-react";
 import { products } from "../data/products";
+import PraxislineChatWidget from "./PraxislineChatWidget";
 
 const categories = Array.from(
   new Set(products.map((p) => p.category).filter(Boolean)),
@@ -107,13 +108,14 @@ const Footer: React.FC = () => {
         </div>
       </div>
 
-    
+
+
 
       <div className="border-t border-gray-800 py-6">
         <p className="text-center text-sm text-gray-500">
           &copy; {year} Digital Shop. All rights reserved.
         </p>
-        <script src="https://voiceflow-ai-web-odionusunobuns-projects.vercel.app/praxisline-widget.js" data-business-id="275434f1-6e3a-4d1f-8bef-582db10fd491" defer></script>
+        <PraxislineChatWidget />
       </div>
     </footer>
   );
